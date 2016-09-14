@@ -12,6 +12,8 @@
 #include <pthread.h>
 
 // =============================================================================
+// Wrapper for integer array and related helper functions.
+
 /**
  * An array of integers whose size is unknown at compile-time.
  */
@@ -43,7 +45,7 @@ int contains (const struct int_array *arr, int value) {
  */
 void read_array_from_file (FILE *input_file, struct int_array *arr) {
   fscanf (input_file, "%zu", &(arr->size));
-  arr->data = (int*) malloc (sizeof(int) * arr->size);
+  arr->data = (int *) malloc (sizeof(int) * arr->size);
   for (size_t i = 0; i < arr->size; ++i) {
     fscanf (input_file, "%d", &(arr->data[i]));
   }
@@ -97,7 +99,7 @@ int main (int argc, char *argv[]) {
   // Allocates resources for all schedules.
   schedule_t base_schedule;
   other_schedules =
-    (schedule_t*) malloc (sizeof(schedule_t) * (N_SCHEDULES - 1));
+    (schedule_t *) malloc (sizeof(schedule_t) * (N_SCHEDULES - 1));
 
   // Open and read data from input file.
   FILE *input_file = fopen(argv[1], "r");
@@ -114,19 +116,14 @@ int main (int argc, char *argv[]) {
 
   // Initialize array of searcher threads.
   const size_t thread_count = base_schedule.size;
-  pthread_t **searcher_threads =
-      (pthread_t **) malloc (sizeof(pthread_t *) * thread_count);
-  
-  // Allocate memory for each searcher thread.
-  for (size_t i = 0; i < thread_count; ++i) {
-    searcher_threads[i] = (pthread_t *) malloc (sizeof(pthread_t));
-  }
+  pthread_t *searcher_threads =
+      (pthread_t *) malloc (sizeof(pthread_t) * thread_count);
   
   // Create each searcher thread.
   for (size_t i = 0; i < thread_count; ++i) {
     int *base_time = (int *) malloc (sizeof(int));
     *base_time = base_schedule.data[i];
-    if (pthread_create (searcher_threads[i],
+    if (pthread_create (&searcher_threads[i],
                         NULL,
                         is_common_time,
                         (void *) base_time)) {
@@ -138,31 +135,27 @@ int main (int argc, char *argv[]) {
   // Flag checking the existence of a common time. Initially set to false.
   int has_common_time = 0;
   for (size_t i = 0; i < thread_count; ++i) {
-    int *is_common = (int *) malloc (sizeof(int));
-    if (pthread_join (*searcher_threads[i], (void **) &is_common)) {
+    int *is_common = NULL;
+    if (pthread_join (searcher_threads[i], (void **) &is_common)) {
       fprintf (stderr, "Error joining thread %zu.\n", i);
       exit (EXIT_FAILURE);
     }
     has_common_time = (has_common_time || *is_common);
-    free (is_common);
+    free(is_common);
   }
 
   if (!has_common_time) {
     fprintf (stdout, "There is no common meeting time.\n");
   }
 
-  // Clean up searcher threads.
-  for (size_t i = 0; i < thread_count; ++i) {
-    free (searcher_threads[i]);
-  }
+  // Clean up and exit.
   free (searcher_threads);
 
-  // Clean up all schedules.
-  free(base_schedule.data);
   for (size_t i = 0; i < N_SCHEDULES - 1; ++i) {
     free(other_schedules[i].data);
   }
   free(other_schedules);
+  /* free(base_schedule.data); */
 
   exit (EXIT_SUCCESS);
 }
