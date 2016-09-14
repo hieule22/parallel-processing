@@ -84,10 +84,8 @@ void *is_common_time (void *arg) {
       pthread_exit ((void *) is_common);
     }
   }
-
-  if (*is_common) {
-    fprintf (stdout, "%d is a common meeting time.\n", base_time);
-  }
+  // Log to stdout and returns is_common to parent thread.
+  fprintf (stdout, "%d is a common meeting time.\n", base_time);
   pthread_exit ((void *) is_common);
 }
 
