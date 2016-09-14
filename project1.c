@@ -28,7 +28,7 @@ struct int_array {
 
 /**
  * Checks if an int_array contains a given value.
- * @param arr pointer to an schedule_t
+ * @param arr pointer to an int_array
  * @param value value to search for
  * @return 1 if value is found; 0 otherwise
  */
@@ -127,9 +127,8 @@ int main(int argc, char **argv) {
   }
   
   // Create each searcher thread.
-  int *base_time = NULL;
   for (size_t i = 0; i < thread_count; ++i) {
-    base_time = (int *) malloc(sizeof(int));
+    int *base_time = (int *) malloc(sizeof(int));
     *base_time = base_schedule.data[i];
     if (pthread_create(searcher_threads[i],
                        NULL,
