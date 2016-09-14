@@ -32,7 +32,7 @@ struct int_array {
  * @param value value to search for
  * @return 1 if value is found; 0 otherwise
  */
-int contains (struct int_array *arr, int value) {
+int contains (const struct int_array *arr, int value) {
   for (size_t i = 0; i < arr->size; ++i) {
     if (arr->data[i] == value) {
       return 1;
