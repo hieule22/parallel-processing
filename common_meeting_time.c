@@ -115,7 +115,7 @@ int main (int argc, char **argv) {
   fclose (input_file);
 
   // Initialize array of searcher threads.
-  size_t thread_count = base_schedule.size;
+  const size_t thread_count = base_schedule.size;
   pthread_t **searcher_threads =
       (pthread_t **) malloc (sizeof(pthread_t *) * thread_count);
   
