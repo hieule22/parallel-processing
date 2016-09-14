@@ -1,138 +1,158 @@
 /**
- * Program to find a list of times when a group of people are all vailable to
- * meet.
+ * The Common Meeting Time problem is the problem of finding a list of times
+ * when a group of people are all available to meet. This program illustrates
+ * a simple concurrent approach to find the solution to the Common Meeting Time
+ * problem for 3 people.
+ * @author Hieu Le
+ * @version September 13th, 2016
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 
-// Maximum number of meetings in a person's schedule.
-#define MAX_ARRAY_SIZE 50
+// Maximum number of elements in an array.
+const size_t MAX_ARRAY_SIZE = 1000000;
+
+/**
+ * An array of integers. Maximum capacity is defined by MAX_ARRAY_SIZE.
+ */
+typedef struct IntArray {
+  size_t size;
+  int data[MAX_ARRAY_SIZE];
+} IntArray;
+
 // Number of schedules to process.
-#define SCHEDULE_COUNT 3
+const size_t N_SCHEDULES = 3;
+
+// Other schedules to match with base schedule.
+IntArray other_schedules[N_SCHEDULES - 1];
 
 /**
- * Reads input from input file to given array of specified size.
+ * Checks if an IntArray contains a given value.
+ * @param arr pointer to an IntArray
+ * @param value value to search for
+ * @return 1 if value is found; 0 otherwise
  */
-void ReadArrayFromFile(FILE *source, int *data, int size) {
-  for (int i = 0; i < size; ++i) {
-    fscanf(source, "%d", data + i);
-  }
-}
-
-/**
- * Struct containing information about a person's meeting schedule.
- */
-typedef struct Schedule {
-  // The number of meetings.
-  int meeting_count;
-  // The times for all meetings.
-  int meeting_times[MAX_ARRAY_SIZE];
-} Schedule;
-
-/**
- * Checks if an input schedule contains a specified time.
- * Returns 1 if found and 0 otherwise.
- */
-int ContainsTime(Schedule *schedule, int time) {
-  for (int i = 0; i < schedule->meeting_count; ++i) {
-    if (schedule->meeting_times[i] == time) {
+int contains(IntArray *arr, int value) {
+  for (size_t i = 0; i < arr->size; ++i) {
+    if (arr->data[i] == value) {
       return 1;
     }
   }
   return 0;
 }
 
-// Other schedules to match with base schedule.
-Schedule other_schedules[SCHEDULE_COUNT - 1];
+/**
+ * Reads data from input file to specified array.
+ * @param input_file pointer to input file to read from
+ * @param arr pointer to an IntArray that needs to be filled
+ */
+void read_array_from_file(FILE *input_file, IntArray* arr) {
+  fscanf(input_file, "%zu", &arr->size);
+  for (size_t i = 0; i < arr->size; ++i) {
+    fscanf(input_file, "%d", arr->data + i);
+  }
+}
 
 /**
- * Function to be executed by each thread.
- * Determines if a time from base schedule is present in all other schedules.
+ * Determines if a time from base schedule is common all other schedules.
+ * Logs to stdout if base time is common. Intended as argument to
+ * pthread_create() method.
+ * @param arg a pointer to base time
+ * @return 1 if base time is common among all schedules; 0 otherwise
  */
-void* FindCommonTime(void *arg) {
+void* is_common_time(void *arg) {
   int base_time = *(int *) arg;
   free(arg);
-  
-  int *status = (int *) malloc(sizeof(int));
-  *status = 1;
-  for (int i = 0; i < SCHEDULE_COUNT - 1; ++i) {
-    if (!ContainsTime(&other_schedules[i], base_time)) {
-      *status = 0;
-      return (void *) status;
+
+  // Flag checking if base time is common among all schedules.
+  // Initially set to true.
+  int *is_common = (int *) malloc(sizeof(int));
+  *is_common = 1;
+  for (size_t i = 0; i < N_SCHEDULES - 1; ++i) {
+    if (!contains(&other_schedules[i], base_time)) {
+      *is_common = 0;
+      pthread_exit((void *) is_common);
     }
   }
 
-  if (*status) {
+  if (*is_common) {
     fprintf(stdout, "%d is a common meeting time.\n", base_time);
   }
-  return (void *) status;
+  pthread_exit((void *) is_common);
 }
 
+/**
+ * Main method.
+ * Name of input file must be passed as argument to the program.
+ */
 int main(int argc, char **argv) {
   if (argc < 2) {
     fprintf(stderr, "Missing command line argument(s).\n");
     exit(EXIT_FAILURE);
   }
 
-  
+  IntArray base_schedule;
+
+  // Open and read data from input file.
   FILE *input_file = fopen(argv[1], "r");
   if (input_file == NULL) {
     fprintf(stderr, "Error opening input file: %s\n", argv[1]);
     exit(EXIT_FAILURE);
   }
-
-  Schedule base_schedule;
-
-  // Read input from file
-  fscanf(input_file, "%d", &base_schedule.meeting_count);
-  ReadArrayFromFile(input_file, base_schedule.meeting_times,
-		    base_schedule.meeting_count);
-  for (int i = 0; i < SCHEDULE_COUNT - 1; ++i) {
-    fscanf(input_file, "%d", &other_schedules[i].meeting_count);
-    ReadArrayFromFile(input_file, other_schedules[i].meeting_times,
-		      other_schedules[i].meeting_count);
+  // Base schedule is always at the beginning of input file.
+  read_array_from_file(input_file, &base_schedule);
+  for (size_t i = 0; i < N_SCHEDULES - 1; ++i) {
+    read_array_from_file(input_file, other_schedules + i);
   }
   fclose(input_file);
+
+  // Initialize array of searcher threads.
+  size_t thread_count = base_schedule.size;
+  pthread_t **searcher_threads =
+      (pthread_t **) malloc(sizeof(pthread_t *) * thread_count);
   
-  int thread_count = base_schedule.meeting_count;
-  pthread_t **workers = (pthread_t **) malloc(sizeof(pthread_t *) *
-					      thread_count);
-  // Allocate memory for pthread_t's.
-  for (int i = 0; i < thread_count; ++i) {
-    workers[i] = (pthread_t *) malloc(sizeof(pthread_t));
+  // Allocate memory for each searcher thread.
+  for (size_t i = 0; i < thread_count; ++i) {
+    searcher_threads[i] = (pthread_t *) malloc(sizeof(pthread_t));
   }
-
-  // Create the worker threads.
-  int* base_time = NULL;
-  for (int i = 0; i < thread_count; ++i) {
+  
+  // Create each searcher thread.
+  int *base_time = NULL;
+  for (size_t i = 0; i < thread_count; ++i) {
     base_time = (int *) malloc(sizeof(int));
-    *base_time = base_schedule.meeting_times[i];
-    if (pthread_create(workers[i], NULL, FindCommonTime, (void *) base_time)) {
-      fprintf(stderr, "Error creating thread %d.\n", i);
+    *base_time = base_schedule.data[i];
+    if (pthread_create(searcher_threads[i],
+                       NULL,
+                       is_common_time,
+                       (void *) base_time)) {
+      fprintf(stderr, "Error creating thread %zu.\n", i);
       exit(EXIT_FAILURE);
     }
   }
 
-  int found = 0;
-  for (int i = 0; i < thread_count; ++i) {
-    void *status = (void *) malloc(sizeof(int));
-    if (pthread_join(*workers[i], &status)) {
-      fprintf(stderr, "Error joining thread %d.\n", i);
+  // Flag checking the existence of a common time. Initially set to false.
+  int has_common_time = 0;
+  for (size_t i = 0; i < thread_count; ++i) {
+    int *is_common = (int *) malloc(sizeof(int));
+    if (pthread_join(*searcher_threads[i], (void **) &is_common)) {
+      fprintf(stderr, "Error joining thread %zu.\n", i);
       exit(EXIT_FAILURE);
     }
-    found = (found || (*(int *) status));
-    free(status);
+    has_common_time = (has_common_time || *is_common);
+    free(is_common);
   }
 
-  if (!found) {
+  if (!has_common_time) {
     fprintf(stdout, "There is no common meeting time.\n");
   }
 
-  // Clean up and exit.
-  for (int i = 0; i < thread_count; ++i) {
-    free(workers[i]);
+  // Clean up worker threads and exit.
+  for (size_t i = 0; i < thread_count; ++i) {
+    free(searcher_threads[i]);
   }
-  free(workers);
+  free(searcher_threads);
+
   exit(EXIT_SUCCESS);
 }
