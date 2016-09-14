@@ -12,18 +12,12 @@
 #include <pthread.h>
 
 // =============================================================================
-// Struct representation of integer array whose size is unknown at compile-time
-// and relevant helper functions.
-
-// Maximum number of elements in an array.
-const size_t CAPACITY = 1000000;
-
 /**
- * An array of integers whose size is bound from above by CAPACITY.
+ * An array of integers whose size is unknown at compile-time.
  */
 struct int_array {
   size_t size;
-  int data[CAPACITY];
+  int *data;
 };
 
 /**
@@ -49,6 +43,7 @@ int contains (const struct int_array *arr, int value) {
  */
 void read_array_from_file (FILE *input_file, struct int_array *arr) {
   fscanf (input_file, "%zu", &(arr->size));
+  arr->data = (int*) malloc (sizeof(int) * arr->size);
   for (size_t i = 0; i < arr->size; ++i) {
     fscanf (input_file, "%d", &(arr->data[i]));
   }
@@ -62,7 +57,7 @@ typedef struct int_array schedule_t;
 const size_t N_SCHEDULES = 3;
 
 // Other schedules to match with base schedule.
-schedule_t other_schedules[N_SCHEDULES - 1];
+schedule_t *other_schedules;
 
 /**
  * Determines if a time from base schedule is present in all other schedules.
@@ -91,15 +86,18 @@ void *is_common_time (void *arg) {
 
 /**
  * Main method.
- * Name of input file must be passed as argument to the program.
+ * Name of input file must be passed as command line argument.
  */
-int main (int argc, char **argv) {
-  if (argc < 2) {
-    fprintf (stderr, "Missing command line argument(s).\n");
+int main (int argc, char *argv[]) {
+  if (argc != 2) {
+    fprintf (stderr, "Usage: %s <input_filename>\n", argv[0]);
     exit (EXIT_FAILURE);
   }
 
+  // Allocates resources for all schedules.
   schedule_t base_schedule;
+  other_schedules =
+    (schedule_t*) malloc (sizeof(schedule_t) * (N_SCHEDULES - 1));
 
   // Open and read data from input file.
   FILE *input_file = fopen(argv[1], "r");
@@ -153,11 +151,18 @@ int main (int argc, char **argv) {
     fprintf (stdout, "There is no common meeting time.\n");
   }
 
-  // Clean up searcher threads and exit.
+  // Clean up searcher threads.
   for (size_t i = 0; i < thread_count; ++i) {
     free (searcher_threads[i]);
   }
   free (searcher_threads);
+
+  // Clean up all schedules.
+  free(base_schedule.data);
+  for (size_t i = 0; i < N_SCHEDULES - 1; ++i) {
+    free(other_schedules[i].data);
+  }
+  free(other_schedules);
 
   exit (EXIT_SUCCESS);
 }
