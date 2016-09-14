@@ -11,30 +11,28 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+// =============================================================================
+// Struct representation of integer array whose size is unknown at compile-time
+// and relevant helper functions.
+
 // Maximum number of elements in an array.
-const size_t MAX_ARRAY_SIZE = 1000000;
+const size_t CAPACITY = 1000000;
 
 /**
- * An array of integers. Maximum capacity is defined by MAX_ARRAY_SIZE.
+ * An array of integers whose size is bound from above by CAPACITY.
  */
-typedef struct IntArray {
+struct int_array {
   size_t size;
-  int data[MAX_ARRAY_SIZE];
-} IntArray;
-
-// Number of schedules to process.
-const size_t N_SCHEDULES = 3;
-
-// Other schedules to match with base schedule.
-IntArray other_schedules[N_SCHEDULES - 1];
+  int data[CAPACITY];
+};
 
 /**
- * Checks if an IntArray contains a given value.
- * @param arr pointer to an IntArray
+ * Checks if an int_array contains a given value.
+ * @param arr pointer to an schedule_t
  * @param value value to search for
  * @return 1 if value is found; 0 otherwise
  */
-int contains(IntArray *arr, int value) {
+int contains(struct int_array *arr, int value) {
   for (size_t i = 0; i < arr->size; ++i) {
     if (arr->data[i] == value) {
       return 1;
@@ -44,21 +42,31 @@ int contains(IntArray *arr, int value) {
 }
 
 /**
- * Reads data from input file to specified array.
+ * Reads data from input file to specified array. First number n must represent
+ * the array size. The following n numbers represent the array elements.
  * @param input_file pointer to input file to read from
- * @param arr pointer to an IntArray that needs to be filled
+ * @param arr pointer to an int_array that needs to be filled
  */
-void read_array_from_file(FILE *input_file, IntArray* arr) {
+void read_array_from_file(FILE *input_file, struct int_array *arr) {
   fscanf(input_file, "%zu", &arr->size);
   for (size_t i = 0; i < arr->size; ++i) {
     fscanf(input_file, "%d", arr->data + i);
   }
 }
 
+// =============================================================================
+
+typedef struct int_array schedule_t;
+
+// Number of schedules to process.
+const size_t N_SCHEDULES = 3;
+
+// Other schedules to match with base schedule.
+schedule_t other_schedules[N_SCHEDULES - 1];
+
 /**
- * Determines if a time from base schedule is common all other schedules.
- * Logs to stdout if base time is common. Intended as argument to
- * pthread_create() method.
+ * Determines if a time from base schedule is present in all other schedules.
+ * Logs to stdout if base time is common. Used as argument to pthread_create().
  * @param arg a pointer to base time
  * @return 1 if base time is common among all schedules; 0 otherwise
  */
@@ -85,7 +93,7 @@ void* is_common_time(void *arg) {
 
 /**
  * Main method.
- * Name of input file must be passed as argument to the program.
+ * Path to input file must be passed as argument to the program.
  */
 int main(int argc, char **argv) {
   if (argc < 2) {
@@ -93,7 +101,7 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
 
-  IntArray base_schedule;
+  schedule_t base_schedule;
 
   // Open and read data from input file.
   FILE *input_file = fopen(argv[1], "r");
