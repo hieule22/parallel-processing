@@ -50,7 +50,7 @@ int contains (struct int_array *arr, int value) {
 void read_array_from_file (FILE *input_file, struct int_array *arr) {
   fscanf (input_file, "%zu", &(arr->size));
   for (size_t i = 0; i < arr->size; ++i) {
-    fscanf (input_file, "%d", arr->data + i);
+    fscanf (input_file, "%d", &(arr->data[i]));
   }
 }
 
@@ -110,7 +110,7 @@ int main (int argc, char **argv) {
   // Base schedule is always at the beginning of input file.
   read_array_from_file (input_file, &base_schedule);
   for (size_t i = 0; i < N_SCHEDULES - 1; ++i) {
-    read_array_from_file (input_file, other_schedules + i);
+    read_array_from_file (input_file, &other_schedules[i]);
   }
   fclose (input_file);
 
@@ -153,7 +153,7 @@ int main (int argc, char **argv) {
     fprintf (stdout, "There is no common meeting time.\n");
   }
 
-  // Clean up worker threads and exit.
+  // Clean up searcher threads and exit.
   for (size_t i = 0; i < thread_count; ++i) {
     free (searcher_threads[i]);
   }
