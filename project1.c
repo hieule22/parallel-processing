@@ -70,7 +70,7 @@ schedule_t other_schedules[N_SCHEDULES - 1];
  * @param arg a pointer to base time
  * @return 1 if base time is common among all schedules; 0 otherwise
  */
-void* is_common_time(void *arg) {
+void *is_common_time(void *arg) {
   int base_time = *(int *) arg;
   free(arg);
 
@@ -93,7 +93,7 @@ void* is_common_time(void *arg) {
 
 /**
  * Main method.
- * Path to input file must be passed as argument to the program.
+ * Name of input file must be passed as argument to the program.
  */
 int main(int argc, char **argv) {
   if (argc < 2) {
