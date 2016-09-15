@@ -58,7 +58,7 @@ typedef struct int_array schedule_t;
 // Number of schedules to process.
 const size_t N_SCHEDULES = 3;
 
-// Other schedules to match with base schedule.
+// Other schedules to match with base schedule. Visible to all threads.
 schedule_t *other_schedules;
 
 /**
@@ -96,8 +96,8 @@ int main (int argc, char *argv[]) {
     exit (EXIT_FAILURE);
   }
 
-  // Allocates resources for all schedules.
-  schedule_t base_schedule;
+  // Allocates memory for all schedules.
+  schedule_t base_schedule;  // Local to main thread.
   other_schedules =
     (schedule_t *) malloc (sizeof(schedule_t) * (N_SCHEDULES - 1));
 
@@ -114,7 +114,7 @@ int main (int argc, char *argv[]) {
   }
   fclose (input_file);
 
-  // Initialize array of searcher threads.
+  // Initialize and allocate memory for all searcher threads.
   const size_t thread_count = base_schedule.size;
   pthread_t *searcher_threads =
       (pthread_t *) malloc (sizeof(pthread_t) * thread_count);
@@ -132,7 +132,7 @@ int main (int argc, char *argv[]) {
     }
   }
 
-  // Flag checking the existence of a common time. Initially set to false.
+  // Flag checking the existence of a common time. Initialized to false.
   int has_common_time = 0;
   for (size_t i = 0; i < thread_count; ++i) {
     int *is_common = NULL;
@@ -150,12 +150,12 @@ int main (int argc, char *argv[]) {
 
   // Clean up and exit.
   free (searcher_threads);
-
+  
+  free(base_schedule.data);
   for (size_t i = 0; i < N_SCHEDULES - 1; ++i) {
     free(other_schedules[i].data);
   }
   free(other_schedules);
-  /* free(base_schedule.data); */
 
   exit (EXIT_SUCCESS);
 }
