@@ -28,14 +28,7 @@ struct int_array {
  * @param value value to search for
  * @return 1 if value is found; 0 otherwise
  */
-int contains (const struct int_array *arr, int value) {
-  for (size_t i = 0; i < arr->size; ++i) {
-    if (arr->data[i] == value) {
-      return 1;
-    }
-  }
-  return 0;
-}
+int contains (const struct int_array *arr, int value);
 
 /**
  * Reads data from input file to specified array. First number n must represent
@@ -43,13 +36,7 @@ int contains (const struct int_array *arr, int value) {
  * @param input_file pointer to input file to read from
  * @param arr pointer to an int_array that needs to be filled
  */
-void read_array_from_file (FILE *input_file, struct int_array *arr) {
-  fscanf (input_file, "%zu", &(arr->size));
-  arr->data = (int *) malloc (sizeof(int) * arr->size);
-  for (size_t i = 0; i < arr->size; ++i) {
-    fscanf (input_file, "%d", &(arr->data[i]));
-  }
-}
+void read_array_from_file (FILE *input_file, struct int_array *arr);
 
 // =============================================================================
 
@@ -88,7 +75,7 @@ void *is_common_time (void *arg) {
 
 /**
  * Main method.
- * Name of input file must be passed as command line argument.
+ * Input file name must be passed as a command line argument.
  */
 int main (int argc, char *argv[]) {
   if (argc != 2) {
@@ -158,4 +145,21 @@ int main (int argc, char *argv[]) {
   free(other_schedules);
 
   exit (EXIT_SUCCESS);
+}
+
+int contains (const struct int_array *arr, const int value) {
+  for (size_t i = 0; i < arr->size; ++i) {
+    if (arr->data[i] == value) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+void read_array_from_file (FILE *input_file, struct int_array *arr) {
+  fscanf (input_file, "%zu", &(arr->size));
+  arr->data = (int *) malloc (sizeof(int) * arr->size);
+  for (size_t i = 0; i < arr->size; ++i) {
+    fscanf (input_file, "%d", &(arr->data[i]));
+  }
 }
