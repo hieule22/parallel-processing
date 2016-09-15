@@ -128,7 +128,7 @@ int main (int argc, char *argv[]) {
       exit (EXIT_FAILURE);
     }
     has_common_time = (has_common_time || *is_common);
-    free(is_common);
+    free (is_common);
   }
 
   if (!has_common_time) {
@@ -138,11 +138,11 @@ int main (int argc, char *argv[]) {
   // Clean up and exit.
   free (searcher_threads);
   
-  free(base_schedule.data);
+  free (base_schedule.data);
   for (size_t i = 0; i < N_SCHEDULES - 1; ++i) {
-    free(other_schedules[i].data);
+    free (other_schedules[i].data);
   }
-  free(other_schedules);
+  free (other_schedules);
 
   exit (EXIT_SUCCESS);
 }
