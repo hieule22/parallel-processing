@@ -69,7 +69,7 @@ void *is_common_time (void *arg) {
       pthread_exit ((void *) is_common);
     }
   }
-  // Log to stdout and returns is_common to parent thread.
+  // Log to stdout and return is_common to parent thread.
   fprintf (stdout, "%d is a common meeting time.\n", base_time);
   pthread_exit ((void *) is_common);
 }
@@ -84,7 +84,7 @@ int main (int argc, char *argv[]) {
     exit (EXIT_FAILURE);
   }
 
-  // Allocates memory for all schedules.
+  // Allocate memory for all schedules.
   schedule_t base_schedule;  // Local to main thread.
   other_schedules =
     (schedule_t *) malloc (sizeof(schedule_t) * (N_SCHEDULES - 1));
@@ -121,7 +121,7 @@ int main (int argc, char *argv[]) {
   }
 
   // Flag checking the existence of a common time. Initialized to false.
-  int has_common_time = 0;
+  bool has_common_time = false;
   void **thread_retval_ptr = (void **) malloc (sizeof(void*));
   for (size_t i = 0; i < thread_count; ++i) {
     if (pthread_join (searcher_threads[i], thread_retval_ptr)) {
