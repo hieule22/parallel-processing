@@ -7,6 +7,7 @@
  * @version September 13th, 2016
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -26,9 +27,9 @@ struct int_array {
  * Checks if an int_array contains a given value.
  * @param arr pointer to an int_array
  * @param value value to search for
- * @return 1 if value is found; 0 otherwise
+ * @return true if value is found; false otherwise
  */
-int contains (const struct int_array *arr, int value);
+bool is_value_in_array (const struct int_array *arr, int value);
 
 /**
  * Reads data from input file to specified array. First number n must represent
@@ -60,11 +61,11 @@ void *is_common_time (void *arg) {
 
   // Flag checking if base time is common among all schedules.
   // Initially set to true.
-  int *is_common = (int *) malloc (sizeof(int));
-  *is_common = 1;
+  bool *is_common = (bool *) malloc (sizeof(bool));
+  *is_common = true;
   for (size_t i = 0; i < N_SCHEDULES - 1; ++i) {
-    if (!contains (&other_schedules[i], base_time)) {
-      *is_common = 0;
+    if (!is_value_in_array (&other_schedules[i], base_time)) {
+      *is_common = false;
       pthread_exit ((void *) is_common);
     }
   }
@@ -121,14 +122,15 @@ int main (int argc, char *argv[]) {
 
   // Flag checking the existence of a common time. Initialized to false.
   int has_common_time = 0;
+  void **thread_retval_ptr = (void **) malloc (sizeof(void*));
   for (size_t i = 0; i < thread_count; ++i) {
-    int *is_common = NULL;
-    if (pthread_join (searcher_threads[i], (void **) &is_common)) {
+    if (pthread_join (searcher_threads[i], thread_retval_ptr)) {
       fprintf (stderr, "Error joining thread %zu.\n", i);
       exit (EXIT_FAILURE);
     }
-    has_common_time = (has_common_time || *is_common);
-    free (is_common);
+    bool is_common = *((bool *) *thread_retval_ptr);
+    has_common_time = (has_common_time || is_common);
+    free (*thread_retval_ptr);
   }
 
   if (!has_common_time) {
@@ -147,13 +149,13 @@ int main (int argc, char *argv[]) {
   exit (EXIT_SUCCESS);
 }
 
-int contains (const struct int_array *arr, const int value) {
+bool is_value_in_array (const struct int_array *arr, const int value) {
   for (size_t i = 0; i < arr->size; ++i) {
     if (arr->data[i] == value) {
-      return 1;
+      return true;
     }
   }
-  return 0;
+  return false;
 }
 
 void read_array_from_file (FILE *input_file, struct int_array *arr) {
