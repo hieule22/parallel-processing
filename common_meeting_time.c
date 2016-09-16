@@ -53,14 +53,13 @@ schedule_t *other_schedules;
  * Determines if a time from base schedule is present in all other schedules.
  * Logs to stdout if base time is common. Used as argument to pthread_create().
  * @param arg a pointer to base time
- * @return 1 if base time is common among all schedules; 0 otherwise
+ * @return true if base time is common among all schedules; false otherwise
  */
 void *is_common_time (void *arg) {
   int base_time = *(int *) arg;
   free (arg);
 
-  // Flag checking if base time is common among all schedules.
-  // Initially set to true.
+  // Flag checking if base time is common in all schedules. Initialized to true.
   bool *is_common = (bool *) malloc (sizeof(bool));
   *is_common = true;
   for (size_t i = 0; i < N_SCHEDULES - 1; ++i) {
@@ -132,6 +131,7 @@ int main (int argc, char *argv[]) {
     has_common_time = (has_common_time || is_common);
     free (*thread_retval_ptr);
   }
+  free (thread_retval_ptr);
 
   if (!has_common_time) {
     fprintf (stdout, "There is no common meeting time.\n");
