@@ -44,10 +44,10 @@ void read_array_from_file (FILE *input_file, struct int_array *arr);
 typedef struct int_array schedule_t;
 
 /* Number of schedules to process. */
-const size_t N_SCHEDULES = 3;
+#define N_SCHEDULES 3
 
 /* Other schedules to match with base schedule. Visible to all threads. */
-schedule_t *g_other_schedules;
+schedule_t g_other_schedules[N_SCHEDULES - 1];
 
 /**
  * Determines if a time from base schedule is present in all other schedules.
@@ -82,10 +82,7 @@ int main (int argc, char *argv[]) {
     exit (EXIT_FAILURE);
   }
 
-  /* Allocate memory for all schedules. */
   schedule_t base_schedule;  /* Local to main thread. */
-  g_other_schedules =
-    (schedule_t *) malloc (sizeof(schedule_t) * (N_SCHEDULES - 1));
 
   /* Open and read data from input file. */
   FILE *input_file = fopen(argv[1], "r");
@@ -142,7 +139,6 @@ int main (int argc, char *argv[]) {
   for (size_t i = 0; i < N_SCHEDULES - 1; ++i) {
     free (g_other_schedules[i].data);
   }
-  free (g_other_schedules);
 
   exit (EXIT_SUCCESS);
 }
