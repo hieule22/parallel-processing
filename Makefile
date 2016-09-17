@@ -1,7 +1,7 @@
 # Compiler
 CC = gcc
 # Compiler standard and flags
-CFLAGS = -std=c99 -Wall -g
+CFLAGS = -std=c11 -Wall -g
 # Libraries to link
 LIBS = -lpthread
 
