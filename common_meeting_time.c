@@ -12,15 +12,15 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-// =============================================================================
-// Wrapper for integer array and related helper functions.
+/* ========================================================================== */
+/* Wrapper for integer array and related helper functions. */
 
 /**
  * An array of integers whose size is unknown at compile-time.
  */
 struct int_array {
-  size_t size;
-  int *data;
+  size_t size;  /* Number of elements in this array. */
+  int *data;  /* Pointer to first element in this array. */
 };
 
 /**
@@ -39,15 +39,15 @@ bool is_value_in_array (const struct int_array *arr, int value);
  */
 void read_array_from_file (FILE *input_file, struct int_array *arr);
 
-// =============================================================================
+/* ========================================================================== */
 
 typedef struct int_array schedule_t;
 
-// Number of schedules to process.
+/* Number of schedules to process. */
 const size_t N_SCHEDULES = 3;
 
-// Other schedules to match with base schedule. Visible to all threads.
-schedule_t *other_schedules;
+/* Other schedules to match with base schedule. Visible to all threads. */
+schedule_t *g_other_schedules;
 
 /**
  * Determines if a time from base schedule is present in all other schedules.
@@ -56,26 +56,25 @@ schedule_t *other_schedules;
  * @return true if base time is common among all schedules; false otherwise
  */
 void *is_common_time (void *arg) {
-  int base_time = *(int *) arg;
+  const int base_time = *(int *) arg;
   free (arg);
 
-  // Flag checking if base time is common in all schedules. Initialized to true.
+  /* Flag to signal if base time is common to all schedules. */
   bool *is_common = (bool *) malloc (sizeof(bool));
   *is_common = true;
   for (size_t i = 0; i < N_SCHEDULES - 1; ++i) {
-    if (!is_value_in_array (&other_schedules[i], base_time)) {
+    if (!is_value_in_array (&g_other_schedules[i], base_time)) {
       *is_common = false;
       pthread_exit ((void *) is_common);
     }
   }
-  // Log to stdout and return is_common to parent thread.
+  /* Log to stdout and return is_common to parent thread. */
   fprintf (stdout, "%d is a common meeting time.\n", base_time);
   pthread_exit ((void *) is_common);
 }
 
 /**
  * Main method.
- * Input file name must be passed as a command line argument.
  */
 int main (int argc, char *argv[]) {
   if (argc != 2) {
@@ -83,30 +82,30 @@ int main (int argc, char *argv[]) {
     exit (EXIT_FAILURE);
   }
 
-  // Allocate memory for all schedules.
-  schedule_t base_schedule;  // Local to main thread.
-  other_schedules =
+  /* Allocate memory for all schedules. */
+  schedule_t base_schedule;  /* Local to main thread. */
+  g_other_schedules =
     (schedule_t *) malloc (sizeof(schedule_t) * (N_SCHEDULES - 1));
 
-  // Open and read data from input file.
+  /* Open and read data from input file. */
   FILE *input_file = fopen(argv[1], "r");
   if (input_file == NULL) {
     fprintf (stderr, "Error opening input file: %s\n", argv[1]);
     exit (EXIT_FAILURE);
   }
-  // Base schedule is always at the beginning of input file.
+  /* Base schedule is always at the beginning of input file. */
   read_array_from_file (input_file, &base_schedule);
   for (size_t i = 0; i < N_SCHEDULES - 1; ++i) {
-    read_array_from_file (input_file, &other_schedules[i]);
+    read_array_from_file (input_file, &g_other_schedules[i]);
   }
   fclose (input_file);
 
-  // Initialize and allocate memory for all searcher threads.
+  /* Initialize and allocate memory for all searcher threads. */
   const size_t thread_count = base_schedule.size;
   pthread_t *searcher_threads =
       (pthread_t *) malloc (sizeof(pthread_t) * thread_count);
   
-  // Create each searcher thread.
+  /* Create each searcher thread. */
   for (size_t i = 0; i < thread_count; ++i) {
     int *base_time = (int *) malloc (sizeof(int));
     *base_time = base_schedule.data[i];
@@ -119,7 +118,7 @@ int main (int argc, char *argv[]) {
     }
   }
 
-  // Flag checking the existence of a common time. Initialized to false.
+  /* Flag to signal the existence of a common time. */
   bool has_common_time = false;
   void **thread_retval_ptr = (void **) malloc (sizeof(void*));
   for (size_t i = 0; i < thread_count; ++i) {
@@ -137,14 +136,13 @@ int main (int argc, char *argv[]) {
     fprintf (stdout, "There is no common meeting time.\n");
   }
 
-  // Clean up and exit.
+  /* Clean up and exit. */
   free (searcher_threads);
-  
   free (base_schedule.data);
   for (size_t i = 0; i < N_SCHEDULES - 1; ++i) {
-    free (other_schedules[i].data);
+    free (g_other_schedules[i].data);
   }
-  free (other_schedules);
+  free (g_other_schedules);
 
   exit (EXIT_SUCCESS);
 }
