@@ -39,9 +39,6 @@ public class CommonMeetingTime {
 
         for (int i = 0; i < THREAD_COUNT; ++i) {
             frames[i] = new SearcherFrame(baseSchedule.get(i), otherSchedules);
-        }
-
-        for (int i = 0; i < THREAD_COUNT; ++i) {
             threads[i] = new Thread(frames[i]);
         }
 
