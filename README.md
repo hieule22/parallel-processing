@@ -1,3 +1,4 @@
 # Overview
 
-A collection of concurrent programs written using the POSIX Thread Library.
+A collection of concurrent programs written using the POSIX Thread and Java
+Thread Libraries.
