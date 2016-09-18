@@ -1,7 +1,7 @@
 # Compiler
 CC = gcc
 # Compiler options
-CFLAGS = -std=c11 -Wall -g
+CFLAGS = -std=c11 -Wall
 # Libraries to link
 LIBS = -lpthread
 
