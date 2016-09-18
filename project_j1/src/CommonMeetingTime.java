@@ -2,6 +2,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
@@ -73,7 +74,7 @@ public class CommonMeetingTime {
         for (int i = 0; i < size; ++i) {
             schedule.add(scanner.nextInt());
         }
-        return schedule;
+        return Collections.unmodifiableList(schedule);
     }
 }
 
