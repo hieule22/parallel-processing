@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
     suites[test_number].PrintInput(ofs);
     ofs.close();
   } else if (strcmp(argv[1], "t") == 0) {  /* Test output from program. */
-    std::cerr << "Input:" << std::endl;
+    std::cerr << "Input #" << test_number << ":" << std::endl;
     suites[test_number].PrintInput(std::cerr);
     std::cerr << "Expected:" << std::endl;
     suites[test_number].PrintOutput(std::cerr);
