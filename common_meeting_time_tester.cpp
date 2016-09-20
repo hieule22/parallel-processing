@@ -4,6 +4,9 @@
 #include <sstream>
 #include <vector>
 
+/**
+ * Representation of a single test case.
+ */
 class TestSuite {
 public:
   TestSuite(const std::vector<std::vector<int>>& input,
@@ -14,6 +17,7 @@ public:
     return input_;
   }
 
+  /* Print test input to output stream. */
   void PrintInput(std::ostream& stream) const {
     for (const auto& schedule : input_) {
       for (int element : schedule) {
@@ -23,21 +27,65 @@ public:
     } 
   }
 
+  /* Print formatted test output to output stream. */
   void PrintOutput(std::ostream& stream) const {
-    if (output_.empty()) { 
-      stream << "There is no common meeting time." << std::endl;
-      return;
+    std::vector<std::string> formatted_output = GetFormattedOutput();
+    for (const std::string& line : formatted_output) {
+      std::cerr << line << std::endl;
     }
-    for (int time : output_) {
-      stream << time << " is a common meeting time." << std::endl;
+  }
+
+  /* Check if output of given stream matches with expected test output. */
+  bool Validate(std::istream& stream) const {
+    std::vector<std::string> expected = GetFormattedOutput();
+    std::vector<std::string> actual;
+    std::string line;
+    while (std::getline(stream, line)) {
+      std::cerr << line << std::endl;
+      actual.push_back(line);
     }
+
+    /* Sort to account for threads' asynchronocity. */
+    std::sort(expected.begin(), expected.end());
+    std::sort(actual.begin(), actual.end());
+
+    if (expected.size() != actual.size()) {
+      std::cerr << "Expected: " << expected.size() << " elements." << std::endl;
+      std::cerr << "Actual: " << actual.size() << " elements." << std::endl;
+      return false;
+    }
+
+    for (size_t i = 0; i < expected.size(); ++i) {
+      if (expected[i] != actual[i]) {
+        std::cerr << "Expected: " << expected[i] << std::endl;
+        std::cerr << "Actual: " << actual[i] << std::endl;
+        return false;
+      }
+    }
+
+    return true;
   }
 
 private:
   const std::vector<std::vector<int>> input_;
   const std::vector<int> output_;
+
+  /* Format test output in debug-friendly form. */
+  std::vector<std::string> GetFormattedOutput() const {
+    std::vector<std::string> output;
+    if (output_.empty()) {
+      output.push_back("There is no common meeting time.");
+    } else {
+      for (const int time : output_) {
+        output.push_back(std::to_string(time) + " is a common meeting time.");
+      }
+    }
+    return output;
+  }
+  
 };
 
+/* Test cases. */
 const TestSuite suites[] =
   {
     {{{5, 3, 2, 4, 1, 5}, {1, 2}, {8, 9, 13, 17, 6, 5, 4, 3, 2}}, {2}},
@@ -52,21 +100,27 @@ const TestSuite suites[] =
     
 
 int main(int argc, char *argv[]) {
-  // Write data to input file.
-  const std::string filename(argv[1]);
   const int test_number = std::atoi(argv[2]);
-  std::ofstream ofs(filename);
-  suites[test_number].PrintInput(ofs);
-  ofs.close();
-
-  // Dump to command terminal.
-  std::cout << "Input:" << std::endl;
-  suites[test_number].PrintInput(std::cout);
-  std::cout << "-----------------------------------" << std::endl;
-  std::cout << "Expected output:" << std::endl;
-  suites[test_number].PrintOutput(std::cout);
-  std::cout << "-----------------------------------" << std::endl;
-  std::cout << "Actual output:" << std::endl;
+  
+  if (strcmp(argv[1], "w") == 0) {  /* Write to input file. */
+    const std::string filename(argv[3]);
+    std::ofstream ofs(filename);
+    suites[test_number].PrintInput(ofs);
+    ofs.close();
+  } else if (strcmp(argv[1], "t") == 0) {  /* Test output from program. */
+    std::cerr << "Input:" << std::endl;
+    suites[test_number].PrintInput(std::cerr);
+    std::cerr << "Expected:" << std::endl;
+    suites[test_number].PrintOutput(std::cerr);
+    std::cerr << "Actual:" << std::endl;
+    
+    if (suites[test_number].Validate(std::cin)) {
+      std::cerr << "Verdict: ACCEPTED" << std::endl;
+    } else {
+      std::cerr << "Verdict: WRONG" << std::endl;
+    }
+    std::cerr << "---------------------------------" << std::endl;
+  }
 
   return 0;
 }
