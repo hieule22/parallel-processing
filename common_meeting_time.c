@@ -13,7 +13,7 @@
 #include <pthread.h>
 
 /* ========================================================================== */
-/* Wrapper for integer array and related helper functions. */
+/* Wrapper for dynamically allocated array and related helper functions. */
 
 /**
  * An array of integers whose size is unknown at compile-time.
@@ -78,7 +78,7 @@ void *is_common_time (void *arg) {
  */
 int main (int argc, char *argv[]) {
   if (argc != 2) {
-    fprintf (stderr, "Usage: %s <input_filename>\n", argv[0]);
+    fprintf (stderr, "Usage: %s <inputfilename>\n", argv[0]);
     exit (EXIT_FAILURE);
   }
 
@@ -124,7 +124,7 @@ int main (int argc, char *argv[]) {
       exit (EXIT_FAILURE);
     }
     bool is_common = *((bool *) *thread_retval_ptr);
-    has_common_time = (has_common_time || is_common);
+    has_common_time |= is_common;
     free (*thread_retval_ptr);
   }
   free (thread_retval_ptr);
