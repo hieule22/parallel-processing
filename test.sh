@@ -7,7 +7,7 @@ TARGET_PROG=$1
 TEST_COUNT=9
 
 TEST_PROG=common_meeting_time_tester
-FILE_NAME=input.txt
+FILE_NAME=543GREbv.in
 
 # Compile test program.
 g++ -std=c++11 -o $TEST_PROG $TEST_PROG.cpp
