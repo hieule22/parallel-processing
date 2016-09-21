@@ -10,79 +10,20 @@
 class TestSuite {
 public:
   TestSuite(const std::vector<std::vector<int>>& input,
-	    const std::vector<int>& output)
-    : input_(input), output_(output) {}
-    
-  const std::vector<std::vector<int>> GetInput() const {
-    return input_;
-  }
+	    const std::vector<int>& output);
 
   /* Print test input to output stream. */
-  void PrintInput(std::ostream& stream) const {
-    for (const auto& schedule : input_) {
-      for (int element : schedule) {
-	stream << element << " ";
-      }
-      stream << std::endl;
-    } 
-  }
+  void PrintInput(std::ostream& stream) const;
 
   /* Print formatted test output to output stream. */
-  void PrintOutput(std::ostream& stream) const {
-    std::vector<std::string> formatted_output = GetFormattedOutput();
-    for (const std::string& line : formatted_output) {
-      std::cerr << line << std::endl;
-    }
-  }
+  void PrintOutput(std::ostream& stream) const;
 
   /* Check if output of given stream matches with expected test output. */
-  bool Validate(std::istream& stream) const {
-    std::vector<std::string> expected = GetFormattedOutput();
-    std::vector<std::string> actual;
-    std::string line;
-    while (std::getline(stream, line)) {
-      std::cerr << line << std::endl;
-      actual.push_back(line);
-    }
-
-    /* Sort to account for threads' asynchronocity. */
-    std::sort(expected.begin(), expected.end());
-    std::sort(actual.begin(), actual.end());
-
-    if (expected.size() != actual.size()) {
-      std::cerr << "Expected: " << expected.size() << " elements." << std::endl;
-      std::cerr << "Actual: " << actual.size() << " elements." << std::endl;
-      return false;
-    }
-
-    for (size_t i = 0; i < expected.size(); ++i) {
-      if (expected[i] != actual[i]) {
-        std::cerr << "Expected: " << expected[i] << std::endl;
-        std::cerr << "Actual: " << actual[i] << std::endl;
-        return false;
-      }
-    }
-
-    return true;
-  }
+  bool Validate(std::istream& stream) const;
 
 private:
   const std::vector<std::vector<int>> input_;
-  const std::vector<int> output_;
-
-  /* Format test output in debug-friendly form. */
-  std::vector<std::string> GetFormattedOutput() const {
-    std::vector<std::string> output;
-    if (output_.empty()) {
-      output.push_back("There is no common meeting time.");
-    } else {
-      for (const int time : output_) {
-        output.push_back(std::to_string(time) + " is a common meeting time.");
-      }
-    }
-    return output;
-  }
-  
+  const std::vector<int> output_;  
 };
 
 /* Test cases. */
@@ -98,6 +39,68 @@ const TestSuite suites[] =
     {{{1, 1}, {1, 1}, {0}}, {}}
   };
     
+TestSuite::TestSuite(const std::vector<std::vector<int>>& input,
+                     const std::vector<int>& output)
+    : input_(input), output_(output) {}
+
+void TestSuite::PrintInput(std::ostream& stream) const {
+  for (const auto& schedule : input_) {
+    for (int element : schedule) {
+      stream << element << " ";
+    }
+    stream << std::endl;
+  } 
+}
+
+/* Format test output in debug-friendly form. */
+std::vector<std::string> GetFormattedOutput(const std::vector<int>& output) {
+  std::vector<std::string> formatted_output;
+  if (output.empty()) {
+    formatted_output.push_back("There is no common meeting time.");
+  } else {
+    for (const int time : output) {
+      formatted_output.push_back(std::to_string(time) + " is a common meeting time.");
+    }
+  }
+  return formatted_output;
+}
+
+void TestSuite::PrintOutput(std::ostream& stream) const {
+  std::vector<std::string> formatted_output = GetFormattedOutput(output_);
+  for (const std::string& line : formatted_output) {
+    std::cerr << line << std::endl;
+  }
+}
+
+bool TestSuite::Validate(std::istream& stream) const {
+  std::vector<std::string> expected = GetFormattedOutput(output_);
+  std::vector<std::string> actual;
+  std::string line;
+  while (std::getline(stream, line)) {
+    std::cerr << line << std::endl;
+    actual.push_back(line);
+  }
+
+  /* Sort to account for threads' asynchronocity. */
+  std::sort(expected.begin(), expected.end());
+  std::sort(actual.begin(), actual.end());
+
+  if (expected.size() != actual.size()) {
+    std::cerr << "Expected: " << expected.size() << " elements." << std::endl;
+    std::cerr << "Actual: " << actual.size() << " elements." << std::endl;
+    return false;
+  }
+
+  for (size_t i = 0; i < expected.size(); ++i) {
+    if (expected[i] != actual[i]) {
+      std::cerr << "Expected: " << expected[i] << std::endl;
+      std::cerr << "Actual: " << actual[i] << std::endl;
+      return false;
+    }
+  }
+
+  return true;
+}
 
 int main(int argc, char *argv[]) {
   const int test_number = std::atoi(argv[2]);
