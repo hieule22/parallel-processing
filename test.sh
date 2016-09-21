@@ -1,8 +1,13 @@
 #!/bin/bash
-TARGET_PROG=common_meeting_time
+# Script to execute test suites for Common Meeting Time program.
+
+# First argument is executable binary to test.
+TARGET_PROG=$1
+# Number of tests to run.
+TEST_COUNT=8
+
 TEST_PROG=common_meeting_time_tester
 FILE_NAME=input.txt
-TEST_COUNT=7
 
 # Compile test program.
 g++ -std=c++11 -o $TEST_PROG $TEST_PROG.cpp
