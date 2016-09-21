@@ -41,7 +41,8 @@ const TestSuite suites[] =
     {{{1, 1},               {1, 2},            {1, 3}},                          {}},
     {{{0},                  {0},               {0}},                             {}},
     {{{0},                  {1, 1},            {1, 1}},                          {}},
-    {{{1, 1},               {1, 1},            {0}},                             {}}
+    {{{1, 1},               {1, 1},            {0}},                             {}},
+    {{{3, 0, 1, 2},         {1, 0},            {1, 0}},                          {0}},
   };
     
 TestSuite::TestSuite(const std::vector<std::vector<int>>& input,
@@ -110,12 +111,12 @@ bool TestSuite::Validate(std::istream& stream) const {
 int main(int argc, char *argv[]) {
   const int test_number = std::atoi(argv[2]);
   
-  if (strcmp(argv[1], "w") == 0) {  /* Write to input file. */
+  if (strcmp(argv[1], "-w") == 0) {  /* Write to input file. */
     const std::string filename(argv[3]);
     std::ofstream out_stream(filename);
     suites[test_number].PrintInput(out_stream);
     out_stream.close();
-  } else if (strcmp(argv[1], "t") == 0) {  /* Test output from program. */
+  } else if (strcmp(argv[1], "-t") == 0) {  /* Test output from program. */
     std::cerr << "Input #" << test_number << ":" << std::endl;
     suites[test_number].PrintInput(std::cerr);
     std::cerr << "Expected:" << std::endl;
