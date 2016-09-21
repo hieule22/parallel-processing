@@ -4,7 +4,7 @@
 # First argument is executable binary to test.
 TARGET_PROG=$1
 # Number of tests to run.
-TEST_COUNT=8
+TEST_COUNT=9
 
 TEST_PROG=common_meeting_time_tester
 FILE_NAME=input.txt
