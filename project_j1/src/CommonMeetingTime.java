@@ -11,53 +11,60 @@ import java.util.Scanner;
  * @version 9/18/16
  */
 public class CommonMeetingTime {
-    public static final int N_SCHEDULES = 3;
+    /** The total number of lists to process. */
+    public static final int N_LISTS = 3;
 
+    /**
+     * Main method.
+     */
     public static void main(String[] args) {
         if (args.length != 1) {
-            throw new IllegalArgumentException("Filename must be passed as program argument.");
+            System.err.println("Usage: java CommonMeetingTime <filename>");
+	    System.exit(-1);
         }
 
         FileReader inputFile = null;
         try {
             inputFile = new FileReader(args[0]);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+	    System.err.printf("Error opening file: %s\n", args[0]);
             System.exit(-1);
         }
 
         Scanner scanner = new Scanner(inputFile);
 
-        List<Integer> baseSchedule = readSchedule(scanner);
-        List<List<Integer>> otherSchedules = new ArrayList<>(N_SCHEDULES - 1);
-        for (int i = 0; i < N_SCHEDULES - 1; ++i) {
-            otherSchedules.add(readSchedule(scanner));
+	/* Base list is at the beginning of input file. */
+        List<Integer> baseList = readList(scanner);
+        List<List<Integer>> otherLists = new ArrayList<>(N_LISTS - 1);
+        for (int i = 0; i < N_LISTS - 1; ++i) {
+            otherLists.add(readList(scanner));
         }
 
-        final int THREAD_COUNT = baseSchedule.size();
-        SearcherFrame[] frames = new SearcherFrame[THREAD_COUNT];
-        Thread[] threads = new Thread[THREAD_COUNT];
+        final int N_THREADS = baseList.size();
+        SearcherThread[] frames = new SearcherThread[N_THREADS];
+        Thread[] threads = new Thread[N_THREADS];
 
-        for (int i = 0; i < THREAD_COUNT; ++i) {
-            frames[i] = new SearcherFrame(baseSchedule.get(i), otherSchedules);
+        for (int i = 0; i < N_THREADS; ++i) {
+            frames[i] = new SearcherThread(baseList.get(i), otherLists);
             threads[i] = new Thread(frames[i]);
         }
 
-        for (int i = 0;i < THREAD_COUNT; ++i) {
+        for (int i = 0;i < N_THREADS; ++i) {
             threads[i].start();
         }
 
-        boolean hasCommonTime = false;
-        for (int i = 0; i < THREAD_COUNT; ++i) {
+        boolean hasCommonValue = false;
+        for (int i = 0; i < N_THREADS; ++i) {
             try {
                 threads[i].join();
-                hasCommonTime = (hasCommonTime || frames[i].isCommon());
+                hasCommonValue = (hasCommonValue || frames[i].isCommonValue());
             } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+		System.err.printf("Error joining thread %d.\n", i);
+		System.exit(-1);
+	    }
         }
 
-        if (!hasCommonTime) {
+        if (!hasCommonValue) {
             System.out.println("There is no common meeting time.");
         }
 
@@ -68,41 +75,17 @@ public class CommonMeetingTime {
         }
     }
 
-    private static List<Integer> readSchedule(final Scanner scanner) {
-        int size = scanner.nextInt();
-        List<Integer> schedule = new ArrayList<>(size);
+    /**
+     * Reads and returns an immutable list of numbers from a given Scanner.
+     * The first number n of the input represents the size of the list.
+     * The following n numbers represent the values in this list.
+     */
+    private static List<Integer> readList(Scanner scanner) {
+        final int size = scanner.nextInt();
+        List<Integer> result = new ArrayList<>(size);
         for (int i = 0; i < size; ++i) {
-            schedule.add(scanner.nextInt());
+            result.add(scanner.nextInt());
         }
-        return Collections.unmodifiableList(schedule);
-    }
-}
-
-class SearcherFrame implements Runnable {
-
-    private final int baseTime;
-    private final List<List<Integer>> otherSchedules;
-    private boolean isCommon;
-
-    public SearcherFrame(int baseTime, List<List<Integer>> otherSchedules) {
-        this.baseTime = baseTime;
-        this.otherSchedules = otherSchedules;
-        this.isCommon = false;
-    }
-
-    @Override
-    public void run() {
-        this.isCommon = true;
-        for (List<Integer> schedule : otherSchedules) {
-            if (!schedule.contains(baseTime)) {
-                this.isCommon = false;
-                return;
-            }
-        }
-        System.out.printf("%d is a common meeting time.\n", baseTime);
-    }
-
-    public boolean isCommon() {
-        return isCommon;
+        return Collections.unmodifiableList(result);
     }
 }
