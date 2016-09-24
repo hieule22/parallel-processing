@@ -20,20 +20,20 @@ public class CommonMeetingTime {
     public static void main(String[] args) {
         if (args.length != 1) {
             System.err.println("Usage: java CommonMeetingTime <filename>");
-	    System.exit(-1);
+	        System.exit(-1);
         }
 
         FileReader inputFile = null;
         try {
             inputFile = new FileReader(args[0]);
         } catch (FileNotFoundException e) {
-	    System.err.printf("Error opening file: %s\n", args[0]);
+	        System.err.printf("Error opening file: %s\n", args[0]);
             System.exit(-1);
         }
 
         Scanner scanner = new Scanner(inputFile);
 
-	/* Base list is at the beginning of input file. */
+	    /* Base list is at the beginning of input file. */
         List<Integer> baseList = readList(scanner);
         List<List<Integer>> otherLists = new ArrayList<>(N_LISTS - 1);
         for (int i = 0; i < N_LISTS - 1; ++i) {
@@ -59,9 +59,9 @@ public class CommonMeetingTime {
                 threads[i].join();
                 hasCommonValue = (hasCommonValue || frames[i].isCommonValue());
             } catch (InterruptedException e) {
-		System.err.printf("Error joining thread %d.\n", i);
-		System.exit(-1);
-	    }
+	    	    System.err.printf("Error joining thread %d.\n", i);
+		        System.exit(-1);
+            }
         }
 
         if (!hasCommonValue) {
@@ -81,9 +81,9 @@ public class CommonMeetingTime {
      * The following n numbers represent the values in this list.
      */
     private static List<Integer> readList(Scanner scanner) {
-        final int size = scanner.nextInt();
-        List<Integer> result = new ArrayList<>(size);
-        for (int i = 0; i < size; ++i) {
+        final int SIZE = scanner.nextInt();
+        List<Integer> result = new ArrayList<>(SIZE);
+        for (int i = 0; i < SIZE; ++i) {
             result.add(scanner.nextInt());
         }
         return Collections.unmodifiableList(result);

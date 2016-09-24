@@ -20,9 +20,9 @@ public class SearcherThread implements Runnable {
      * Constructs a SearcherThread from given value and list of lists..
      */
     public SearcherThread(int value, List<List<Integer>> targetLists) {
-	this.value = value;
-	this.targetLists = targetLists;
-	this.isCommonValue = false;
+	    this.value = value;
+	    this.targetLists = targetLists;
+	    this.isCommonValue = false;
     }
 
     /**
@@ -30,20 +30,20 @@ public class SearcherThread implements Runnable {
      */
     @Override
     public void run() {
-	isCommonValue = true;
-	for (List<Integer> schedule : targetLists) {
-	    if (!schedule.contains(value)) {
-		isCommonValue = false;
-		return;
+	    isCommonValue = true;
+	    for (List<Integer> schedule : targetLists) {
+            if (!schedule.contains(value)) {
+	        	isCommonValue = false;
+	        	return;
+	        }
 	    }
-	}
-	System.out.printf("%d is a common meeting time.\n", value);
+	    System.out.printf("%d is a common meeting time.\n", value);
     }
 
     /**
      * Returns whether value is common to all lists.
      */
     public boolean isCommonValue() {
-	return isCommonValue;
+        return isCommonValue;
     }
 }
