@@ -84,9 +84,9 @@ public class CommonMeetingTime {
    * The following n numbers represent the values in this list.
    */
   private static List<Integer> readList(Scanner scanner) {
-    final int SIZE = scanner.nextInt();
-    List<Integer> result = new ArrayList<>(SIZE);
-    for (int i = 0; i < SIZE; ++i) {
+    final int size = scanner.nextInt();
+    List<Integer> result = new ArrayList<>(size);
+    for (int i = 0; i < size; ++i) {
       result.add(scanner.nextInt());
     }
     return Collections.unmodifiableList(result);
