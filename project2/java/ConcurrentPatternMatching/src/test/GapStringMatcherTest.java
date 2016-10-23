@@ -28,5 +28,9 @@ public class GapStringMatcherTest {
             assertEquals(matcher.countMatch("Foo$Bar"), 0);
             assertEquals(matcher.countMatch("Foo()Bar"), 0);
         }
+        {
+            GapStringMatcher matcher = new GapStringMatcher("Foo", "Foo", 2);
+            assertEquals(matcher.countMatch("Foo12Foo12Foo"), 2);
+        }
     }
 }
