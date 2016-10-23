@@ -4,6 +4,7 @@ import main.TextLine;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -61,6 +62,12 @@ public class Main {
             TextLine currentLine = textLines.get(i);
             System.out.printf("%d: %d matches %s\n", i, currentLine.getMatchCount(),
                     currentLine.getContent());
+        }
+
+        try {
+            inputFile.close();
+        } catch (IOException ex) {
+            ex.printStackTrace(System.err);
         }
     }
 }
