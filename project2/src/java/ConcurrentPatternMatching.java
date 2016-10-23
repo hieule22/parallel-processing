@@ -1,4 +1,4 @@
-package main;
+import main.TextLine;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
