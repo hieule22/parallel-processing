@@ -15,7 +15,7 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
         if (args.length != 4) {
-            System.err.printf("Usage: java %s <filename> <prefix> <min>...<max> <suffix\n",
+            System.err.printf("Usage: java %s <filename> <prefix> <min>..<max> <suffix\n",
                     Main.class.getName());
             System.exit(-1);
         }
@@ -25,7 +25,6 @@ public class Main {
             inputFile = new FileReader(args[0]);
         } catch (FileNotFoundException ex) {
             System.err.printf("Error opening file: %s\n", args[0]);
-            ex.printStackTrace(System.err);
             System.exit(-1);
         }
 
