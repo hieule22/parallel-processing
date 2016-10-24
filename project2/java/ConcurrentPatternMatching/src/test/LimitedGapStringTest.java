@@ -31,68 +31,65 @@ public class LimitedGapStringTest {
     @Test
     public void testGetPrefix() throws Exception {
         final String expected = "Foo";
-        LimitedGapString gapString = new LimitedGapString(expected, "", 0, 0);
+        LimitedGapString gapString = LimitedGapString.create(expected, "", "0..0");
         assertEquals(gapString.getPrefix(), expected);
     }
 
     @Test
     public void testGetSuffix() throws Exception {
         final String expected = "Foo";
-        LimitedGapString gapString = new LimitedGapString("", expected, 0, 0);
+        LimitedGapString gapString = LimitedGapString.create("", expected, "0..0");
         assertEquals(gapString.getSuffix(), expected);
     }
 
     @Test
     public void testGetMinGapLength() throws Exception {
         final int expected = 1;
-        LimitedGapString gapString = new LimitedGapString("", "", expected, expected);
+        LimitedGapString gapString = LimitedGapString.create("", "", expected + ".." + expected);
         assertEquals(gapString.getMinGapLength(), expected);
     }
 
     @Test
     public void testGetMaxGapLength() throws Exception {
-        final int expected = 1;
-        LimitedGapString gapString = new LimitedGapString("", "", expected, expected);
-        assertEquals(gapString. getMaxGapLength(), expected);
+        final int minGapLength = 1;
+        final int maxGapLength = 2;
+        LimitedGapString gapString = LimitedGapString.create("", "",
+                minGapLength + ".." + maxGapLength);
+        assertEquals(gapString. getMaxGapLength(), maxGapLength - minGapLength + 1);
     }
 
-    private void testCreationFailure(final String gapLengthRange) throws Exception {
+    private void testCreationFailure(final String gapLengthRange,
+                                     final String exceptionMessage) throws Exception {
         try {
             LimitedGapString.create("", "", gapLengthRange);
             fail("Expected an IllegalArgumentException to be thrown");
         } catch (IllegalArgumentException ex) {
-            assertThat(ex.getMessage(), containsString("Invalid gap length range." +
-                    " Expected format: <min>..<max>. Found:"));
+            assertThat(ex.getMessage(), containsString(exceptionMessage));
         }
     }
 
     @Test
     public void createWithIllegalGapRange() throws Exception {
-        testCreationFailure("");
-        testCreationFailure("..");
-        testCreationFailure("12");
-        testCreationFailure("1.2");
-        testCreationFailure("2...3");
-        testCreationFailure("a..b");
-        testCreationFailure("a..1");
-        testCreationFailure("1..b");
-        testCreationFailure("1..2..3");
-    }
-
-    private void testConstructionFailure(final int minGapLength, final int maxGapLength) {
-        try {
-            new LimitedGapString("", "", minGapLength, maxGapLength);
-            fail("Expected an IllegalArgumentException to be thrown");
-        } catch (IllegalArgumentException ex) {
-            assertThat(ex.getMessage(), containsString("Minimum gap length must be" +
-                    " non-negative and must not exceed maximum gap length"));
+        {
+            final String exceptionMessage = "Invalid gap length range." +
+                    " Expected format: <min>..<max>. Found:";
+            testCreationFailure("", exceptionMessage);
+            testCreationFailure("..", exceptionMessage);
+            testCreationFailure("12", exceptionMessage);
+            testCreationFailure("1.2", exceptionMessage);
+            testCreationFailure("2...3", exceptionMessage);
+            testCreationFailure("a..b", exceptionMessage);
+            testCreationFailure("a..1", exceptionMessage);
+            testCreationFailure("1..b", exceptionMessage);
+            testCreationFailure("1..2..3", exceptionMessage);
+            testCreationFailure("-1..-2", exceptionMessage);
+            testCreationFailure("-1..10", exceptionMessage);
+            testCreationFailure("2 .. 3", exceptionMessage);
         }
-    }
-
-    @Test
-    public void constructWithIllegalGapRange() {
-        testConstructionFailure(-1, -2);
-        testConstructionFailure(-1, 10);
-        testConstructionFailure(5, 3);
+        {
+            final String exceptionMessage = "Minimum gap length must not exceed maximum gap length";
+            testCreationFailure("5..3", exceptionMessage);
+            testCreationFailure("1..0", exceptionMessage);
+        }
     }
 }

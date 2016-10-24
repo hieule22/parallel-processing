@@ -22,15 +22,16 @@ public class TextLineTest {
         TextLine line = new TextLine("");
         assertEquals(line.getMatchCount(), 0);
         final int expected = 1;
-        line.incrementMatchCountBy(expected);
+        line.increaseMatchCountBy(expected);
         assertEquals(line.getMatchCount(), expected);
     }
 
     @org.junit.Test
-    public void testSetMatchCount() throws Exception {
+    public void testIncreaseMatchCountBy() throws Exception {
         TextLine line = new TextLine("");
-        final int expected = 1;
-        line.incrementMatchCountBy(expected);
-        assertEquals(line.getMatchCount(), expected);
+        final int original = line.getMatchCount();
+        final int increase = 1;
+        line.increaseMatchCountBy(increase);
+        assertEquals(line.getMatchCount(), original + increase);
     }
 }
