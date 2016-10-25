@@ -36,12 +36,32 @@ public class Main {
         while (fileScanner.hasNextLine()) {
             textLines.add(new TextLine(fileScanner.nextLine()));
         }
+        try {
+            inputFile.close();
+        } catch (IOException ex) {
+            ex.printStackTrace(System.err);
+        }
 
         final String prefix = args[1];
         final String suffix = args[3];
         final String gapLengthRange = args[2];
         LimitedGapString gapString = LimitedGapString.create(prefix, suffix, gapLengthRange);
 
+        patternMatch(textLines, gapString);
+
+        for (int i = 0; i < textLines.size(); ++i) {
+            TextLine currentLine = textLines.get(i);
+            System.out.printf("%d: %d matches %s\n", i, currentLine.getMatchCount(),
+                    currentLine.getContent());
+        }
+    }
+
+    /**
+     * Match a list of text lines against a given limited gap string.
+     * @param textLines the list of lines to match
+     * @param gapString the limited gap string to match
+     */
+    private static void patternMatch(List<TextLine> textLines, LimitedGapString gapString) {
         final int THREAD_COUNT = gapString.getMaxGapLength() - gapString.getMinGapLength() + 1;
         Thread[] threads = new Thread[THREAD_COUNT];
         for (int i = 0; i < threads.length; ++i) {
@@ -62,18 +82,6 @@ public class Main {
                 ex.printStackTrace(System.err);
                 System.exit(-1);
             }
-        }
-
-        for (int i = 0; i < textLines.size(); ++i) {
-            TextLine currentLine = textLines.get(i);
-            System.out.printf("%d: %d matches %s\n", i, currentLine.getMatchCount(),
-                    currentLine.getContent());
-        }
-
-        try {
-            inputFile.close();
-        } catch (IOException ex) {
-            ex.printStackTrace(System.err);
         }
     }
 }
