@@ -9,6 +9,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
 
 /**
+ * Unit tests for LimitedGapString.
  * @author Hieu Le
  * @version 10/23/16
  */
@@ -26,6 +27,16 @@ public class LimitedGapStringTest {
         assertEquals(gapString.getSuffix(), expectedSuffix);
         assertEquals(gapString.getMinGapLength(), expectedMinLength);
         assertEquals(gapString.getMaxGapLength(), expectedMaxLength);
+    }
+
+    @Test
+    public void testCreateException() throws Exception {
+        try {
+            LimitedGapString.create(null, null, null);
+            fail("Expected NullPointerException to be thrown");
+        } catch (NullPointerException expected) {
+            // Exception can be squelched here.
+        }
     }
 
     @Test
@@ -58,8 +69,8 @@ public class LimitedGapStringTest {
         assertEquals(gapString. getMaxGapLength(), maxGapLength - minGapLength + 1);
     }
 
-    private void testCreationFailure(final String gapLengthRange,
-                                     final String exceptionMessage) throws Exception {
+    private void testCreationFailure(String gapLengthRange,
+                                     String exceptionMessage) throws Exception {
         try {
             LimitedGapString.create("", "", gapLengthRange);
             fail("Expected an IllegalArgumentException to be thrown");
@@ -70,26 +81,23 @@ public class LimitedGapStringTest {
 
     @Test
     public void createWithIllegalGapRange() throws Exception {
-        {
-            final String exceptionMessage = "Invalid gap length range." +
-                    " Expected format: <min>..<max>. Found:";
-            testCreationFailure("", exceptionMessage);
-            testCreationFailure("..", exceptionMessage);
-            testCreationFailure("12", exceptionMessage);
-            testCreationFailure("1.2", exceptionMessage);
-            testCreationFailure("2...3", exceptionMessage);
-            testCreationFailure("a..b", exceptionMessage);
-            testCreationFailure("a..1", exceptionMessage);
-            testCreationFailure("1..b", exceptionMessage);
-            testCreationFailure("1..2..3", exceptionMessage);
-            testCreationFailure("-1..-2", exceptionMessage);
-            testCreationFailure("-1..10", exceptionMessage);
-            testCreationFailure("2 .. 3", exceptionMessage);
-        }
-        {
-            final String exceptionMessage = "Minimum gap length must not exceed maximum gap length";
-            testCreationFailure("5..3", exceptionMessage);
-            testCreationFailure("1..0", exceptionMessage);
-        }
+        String exceptionMessage = "Invalid gap length range." +
+                " Expected format: <min>..<max>. Found:";
+        testCreationFailure("", exceptionMessage);
+        testCreationFailure("..", exceptionMessage);
+        testCreationFailure("12", exceptionMessage);
+        testCreationFailure("1.2", exceptionMessage);
+        testCreationFailure("2...3", exceptionMessage);
+        testCreationFailure("a..b", exceptionMessage);
+        testCreationFailure("a..1", exceptionMessage);
+        testCreationFailure("1..b", exceptionMessage);
+        testCreationFailure("1..2..3", exceptionMessage);
+        testCreationFailure("-1..-2", exceptionMessage);
+        testCreationFailure("-1..10", exceptionMessage);
+        testCreationFailure("2 .. 3", exceptionMessage);
+
+        exceptionMessage = "Minimum gap length must not exceed maximum gap length";
+        testCreationFailure("5..3", exceptionMessage);
+        testCreationFailure("1..0", exceptionMessage);
     }
 }
