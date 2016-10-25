@@ -3,8 +3,12 @@ package test;
 import main.TextLine;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
 
 /**
+ * Unit tests for TextLine.
  * @author Hieu Le
  * @version 10/23/16
  */
@@ -33,5 +37,15 @@ public class TextLineTest {
         final int increase = 1;
         line.increaseMatchCountBy(increase);
         assertEquals(line.getMatchCount(), original + increase);
+    }
+
+    @org.junit.Test
+    public void testConstructorException() throws Exception {
+        try {
+            new TextLine(null);
+            fail("Expected NullPointerException to be thrown");
+        } catch (NullPointerException ex) {
+            assertThat(ex.getMessage(), containsString("content"));
+        }
     }
 }

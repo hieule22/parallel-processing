@@ -3,8 +3,8 @@ package main;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * TextLine holds all the information associated with one line of text,
- * including its content and the number of limited gap strings found.
+ * TextLine holds all the information associated with one line of text, including its content and
+ * the number of limited gap strings found.
  * @author Hieu Le
  * @version 10/23/16
  */
@@ -17,10 +17,13 @@ public class TextLine {
     private ReentrantLock matchCountLock;
 
     /**
-     * Constructs a TextLine object from a given String.
-     * @param content the String populating this text line
+     * Constructs a TextLine object from a given string.
+     * @param content the string populating this text line
      */
     public TextLine(String content) {
+        if (content == null) {
+            throw new NullPointerException("content");
+        }
         this.content = content;
         matchCount = 0;
         matchCountLock = new ReentrantLock();
@@ -28,7 +31,7 @@ public class TextLine {
 
     /**
      * Returns the content of this text line.
-     * @return this text line's String content.
+     * @return this text line's string content
      */
     public String getContent() {
         return content;
@@ -48,7 +51,7 @@ public class TextLine {
      */
     public void increaseMatchCountBy(int delta) {
         matchCountLock.lock();
-        this.matchCount += delta;
+        matchCount += delta;
         matchCountLock.unlock();
     }
 }
