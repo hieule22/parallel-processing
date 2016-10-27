@@ -58,7 +58,7 @@ public class ConcurrentPatternMatching {
      * @param suffix the suffix of the LGS
      * @param gapLengthRange gap length range of the LGS
      */
-    private static void patternMatch(List<TextLine> textLines, String prefix, String suffix,
+    public static void patternMatch(List<TextLine> textLines, String prefix, String suffix,
                                      NumberRange gapLengthRange) {
         final int THREAD_COUNT = gapLengthRange.getUpperBound() - gapLengthRange.getLowerBound() + 1;
         Thread[] matchers = new Thread[THREAD_COUNT];
@@ -82,7 +82,7 @@ public class ConcurrentPatternMatching {
         }
     }
 
-    private static class NumberRange {
+    public static class NumberRange {
         // The regex patterns for range notation.
         private static final String DELIMITER_REGEX = "\\.{2}";
         private static final String RANGE_REGEX = "\\d+" + DELIMITER_REGEX + "\\d+";
