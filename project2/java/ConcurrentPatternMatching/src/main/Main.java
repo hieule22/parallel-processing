@@ -1,6 +1,4 @@
-import main.LimitedGapString;
-import main.MatcherThread;
-import main.TextLine;
+package main;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;

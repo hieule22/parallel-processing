@@ -1,4 +1,7 @@
+package test;
+
 import main.LimitedGapString;
+import main.Main;
 import main.TextLine;
 import org.junit.Test;
 
@@ -9,7 +12,7 @@ import java.util.List;
 import static junit.framework.TestCase.assertEquals;
 
 /**
- * Unit tests for Main program.
+ * Unit tests for main.Main program.
  * @author Hieu Le
  * @version 10/25/16
  */
@@ -26,8 +29,8 @@ public class MainTest {
     private void validate(String[] lines, LimitedGapString gapString,
                           int[] expected) throws Exception {
         List<TextLine> textLines = generateTextLines(lines);
-        // Use reflection to access private member of Main. White box testing is justified here
-        // as setting up input file and capturing program output are troublesom.
+        // Use reflection to access private member of main.Main. White box testing is justified here
+        // as setting up input file and capturing program output are troublesome.
         Method patternMatch =
                 Main.class.getDeclaredMethod("patternMatch", List.class, LimitedGapString.class);
         patternMatch.setAccessible(true);
