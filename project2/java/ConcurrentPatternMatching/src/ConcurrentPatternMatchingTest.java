@@ -73,5 +73,10 @@ public class ConcurrentPatternMatchingTest {
             expected[i] = MAX_LINE_LENGTH - 1;
         }
         validate(lines, LimitedGapString.create("a", "a", "0..0"), expected);
+
+        for (int i = 0; i < expected.length; ++i) {
+            expected[i] = MAX_LINE_LENGTH * (MAX_LINE_LENGTH - 1) / 2;
+        }
+        validate(lines, LimitedGapString.create("a", "a", "0..2000"), expected);
     }
 }
