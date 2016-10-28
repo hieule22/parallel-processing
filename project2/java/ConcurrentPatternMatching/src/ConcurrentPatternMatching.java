@@ -92,6 +92,10 @@ public class ConcurrentPatternMatching {
         // The upper bound of the range.
         private final int upperBound;
 
+        /**
+         * Constructs a number range from a string of the form <min>..<max>.
+         * @param range the range for this interval
+         */
         public NumberRange(String range) {
             if (!range.matches(RANGE_REGEX)) {
                 throw new IllegalArgumentException(String.format("Invalid number range. " +
@@ -103,7 +107,9 @@ public class ConcurrentPatternMatching {
             upperBound = Integer.parseInt(tokens[1]);
 
             if (lowerBound > upperBound) {
-                throw new IllegalArgumentException("Lower bound must not exceed upper bound");
+                throw new IllegalArgumentException(
+                        String.format("Lower bound must not exceed upper bound. Low: %d High: %d",
+                        lowerBound, upperBound));
             }
         }
 

@@ -46,6 +46,8 @@ public class ConcurrentPatternMatchingTest {
                 new int[] {0});
         validate(new String[] {"foobarbaz"}, LimitedGapString.create("foo", "ba", "0..100"),
                 new int[] {2});
+        validate(new String[] {"a"}, LimitedGapString.create("foo", "bar", "0..100"),
+                new int[] {0});
     }
 
     @Test
