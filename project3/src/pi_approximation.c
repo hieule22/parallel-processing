@@ -1,7 +1,7 @@
 /**
  * CS 435 - Project 4: A Concurrent Computation of PI.
  * Multi-threaded program to perform the Monte Carlo simulation method for
- * approximation the value of PI.
+ * approximating the value of PI.
  * @author Hieu Le
  * @version December 7th, 2016
  */
@@ -17,7 +17,7 @@
 #define RADIUS 0.5
 
 /**
- * A struct storing the counter and accumulator for a simulation.
+ * A struct storing the information associated with a simulation.
  */
 typedef struct {
   // The number of points inside the unit circle.
@@ -26,7 +26,7 @@ typedef struct {
   int n_total;
   // The maximum number of experiments to be performed.
   int maximum;
-  // The interval between printing of approximation.
+  // The number of experiments between printing of approximation.
   int interval;
   // A flag indicating if the simulation has completed.
   bool is_done;
@@ -54,7 +54,7 @@ list_t list;
 pthread_mutex_t list_lock;
 // Mutex guarding the random number generator.
 pthread_mutex_t rand_lock;
-// The conditional variable that signifies if a new element has been added
+// The condition variable that signals if a new element has been added
 // to the approximation list.
 pthread_cond_t list_has_new_elements;
 
@@ -92,7 +92,7 @@ void *simulate(void *arg) {
       // Changes to the approximation list must be atomic.
       pthread_mutex_lock(&list_lock);
       list_add(&list, &entry);
-      // Wake the printing thread upon a new addition to the list.
+      // Wake up the printing thread upon a new addition to the list.
       pthread_cond_broadcast(&list_has_new_elements);
       pthread_mutex_unlock(&list_lock);
 
@@ -122,7 +122,7 @@ void *print(void *arg) {
     const pair_t *estimate = list_get(&list, index);
     pthread_mutex_unlock(&list_lock);
     // Print the approximations.
-    fprintf(stdout, "%lu: %.9f\n", estimate->first, estimate->second);
+    fprintf(stdout, "%zd: %.9f\n", estimate->first, estimate->second);
     ++index;
   }
 
