@@ -1,5 +1,7 @@
 /**
  * CS 435 - Project 4: A Concurrent Computation of PI.
+ * Multi-threaded program to perform the Monte Carlo simulation method for
+ * approximation the value of PI.
  * @author Hieu Le
  * @version December 7th, 2016
  */
@@ -15,96 +17,113 @@
 #define RADIUS 0.5
 
 /**
- * Struct storing the information about a simulation.
+ * A struct storing the counter and accumulator for a simulation.
  */
 typedef struct {
   // The number of points inside the unit circle.
-  int num_interior;
+  int n_interior;
   // The total number of points examined so far.
-  int num_total;
-  // The interval between printing of approximation.
-  int interval;
+  int n_total;
   // The maximum number of experiments to be performed.
   int maximum;
+  // The interval between printing of approximation.
+  int interval;
   // A flag indicating if the simulation has completed.
-  bool complete;
+  bool is_done;
 } simulation_t;
 
 /**
- * Initializes a simulation with a given interval and maximum number of
- * experiments.
+ * Initializes a simulation with a specified maximum number of experiments
+ * and interval between printing of a new approximation.
  * @param sim a pointer to the simulation to be initialized
- * @param interval the number of experiments between printing of approximations
  * @param maximum the maximum number of experiments to be performed
+ * @param interval the number of experiments between printing of approximations
  */
-void simulation_init(simulation_t *sim, const int interval, const int maximum) {
-  sim->num_interior = sim->num_total = 0;
-  sim->interval = interval;
+void simulation_init(simulation_t *sim, const int maximum, const int interval) {
+  sim->n_interior = sim->n_total = 0;
   sim->maximum = maximum;
-  sim->complete = false;
+  sim->interval = interval;
+  sim->is_done = false;
 }
 
 // Main simulation and its guarding mutex.
-simulation_t sim;
-pthread_mutex_t s_lock;
-// Result list and its guarding mutex.
+simulation_t simulation;
+pthread_mutex_t simulation_lock;
+// Approximation list and its guarding mutex.
 list_t list;
-pthread_mutex_t l_lock;
+pthread_mutex_t list_lock;
 // Mutex guarding the random number generator.
-pthread_mutex_t r_lock;
-// Conditional variable.
+pthread_mutex_t rand_lock;
+// The conditional variable that signifies if a new element has been added
+// to the approximation list.
 pthread_cond_t list_has_new_elements;
 
-void *experiment(void *arg) {
-  while (!sim.complete) {
-    // Generate a random data point and checks if it is inside the unit circle.
-    pthread_mutex_lock(&r_lock);
+/*
+ * Actions to be performed by the simulation threads.
+ */
+void *simulate(void *arg) {
+  // Checking 'is_done' here is an atomic action since the only update to the
+  // flag is done when the simulation lock is held.
+  while (!simulation.is_done) {
+    // Generate a random data point.
+    pthread_mutex_lock(&rand_lock);
     int x = rand();
     int y = rand();
-    pthread_mutex_unlock(&r_lock);
+    pthread_mutex_unlock(&rand_lock);
 
+    // Normalize the coordinates of the random point and compute its distance
+    // from the center of the unit circle. It is arguably more efficient to
+    // compare the square of the distance with the square of the radius, since
+    // the sqrt() function can be expensive.
     double dx = ((double) x) / RAND_MAX - RADIUS;
     double dy = ((double) y) / RAND_MAX - RADIUS;
-    double dist = dx * dx + dy * dy;
+    double squared_dist = dx * dx + dy * dy;
 
-    pthread_mutex_lock(&s_lock);
-    ++sim.num_total;
-    sim.num_interior += (dist <= RADIUS * RADIUS) ? 1 : 0;
-    if (sim.num_total % sim.interval == 0 || sim.num_total == sim.maximum) {
-      // Compute the new approximation and add it to the queue.
-      double approx = sim.num_interior * 4.0 / sim.num_total;
-      pthread_mutex_lock(&l_lock);
-      entry_t entry;
-      entry.first = sim.num_total;
-      entry.second = approx;
+    // Updates to the simulation's counter and accumulator must be atomic.
+    pthread_mutex_lock(&simulation_lock);
+    ++simulation.n_total;
+    simulation.n_interior += (squared_dist <= RADIUS * RADIUS) ? 1 : 0;
+    if (simulation.n_total % simulation.interval == 0
+        || simulation.n_total == simulation.maximum) {
+      // Compute the new approximation and add it to the list.
+      double estimate = simulation.n_interior * 4.0 / simulation.n_total;
+      pair_t entry = {simulation.n_total, estimate};
+
+      // Changes to the approximation list must be atomic.
+      pthread_mutex_lock(&list_lock);
       list_add(&list, &entry);
+      // Wake the printing thread upon a new addition to the list.
       pthread_cond_broadcast(&list_has_new_elements);
-      pthread_mutex_unlock(&l_lock);
+      pthread_mutex_unlock(&list_lock);
 
-      if (sim.num_total == sim.maximum) {
-        sim.complete = true;
+      // Terminate the simulation after maximum number of experiments is met.
+      if (simulation.n_total == simulation.maximum) {
+        simulation.is_done = true;
       }
     }
-    pthread_mutex_unlock(&s_lock);
+    pthread_mutex_unlock(&simulation_lock);
   }
 
   pthread_exit(NULL);
 }
 
+/**
+ * Actions to be performed by the printing thread.
+ */
 void *print(void *arg) {
-  int iterations = *(int *) arg;
-  free(arg);
+  // The index in the list of the next approximation to print.
   size_t index = 0;
-  while (index < iterations) {
-    pthread_mutex_lock(&l_lock);
-    while (index == list_size(&list)) {
-      pthread_cond_wait(&list_has_new_elements, &l_lock);
+  while (index < list.capacity) {
+    pthread_mutex_lock(&list_lock);
+    while (index >= list_size(&list)) {
+      // Wait for new approximations to be added to the list.
+      pthread_cond_wait(&list_has_new_elements, &list_lock);
     }
-
-    const entry_t *entry = list_get(&list, index);
+    const pair_t *estimate = list_get(&list, index);
+    pthread_mutex_unlock(&list_lock);
+    // Print the approximations.
+    fprintf(stdout, "%lu: %.9f\n", estimate->first, estimate->second);
     ++index;
-    fprintf(stderr, "%d: %.9f\n", entry->first, entry->second);
-    pthread_mutex_unlock(&l_lock);
   }
 
   pthread_exit(NULL);
@@ -113,29 +132,34 @@ void *print(void *arg) {
 int main(int argc, char *argv[]) {
   if (argc != 4) {
     fprintf(stderr, "Usage: %s <number of simulation threads> "
-            "<number of experiments> <interval between printing>.\n", argv[0]);
+            "<total number of experiments> "
+            "<number of experiments between printing>.\n", argv[0]);
     exit(EXIT_FAILURE);
   }
 
   int n_simulators = atoi(argv[1]);
   int maximum = atoi(argv[2]);
   int interval = atoi(argv[3]);
-  int n_results = ceil(maximum * 1.0 / interval);
-  simulation_init(&sim, interval, maximum);
-  if (pthread_mutex_init(&s_lock, NULL)) {
-    fprintf(stderr, "Error initializing s_lock.\n");
+  // The total number of approximations can be shown to be equal to
+  // ceiling(maximum / interval).
+  int n_approximations = ceil(((double) maximum) * 1.0 / interval);
+
+  simulation_init(&simulation, maximum, interval);
+  if (pthread_mutex_init(&simulation_lock, NULL)) {
+    fprintf(stderr, "Error initializing simulation_lock.\n");
     exit(EXIT_FAILURE);
   }
 
-  list_init(&list, n_results);
-  if (pthread_mutex_init(&l_lock, NULL)) {
-    fprintf(stderr, "Error initializing l_lock.\n");
+  // The capacity of the list equals the total number of approximations.
+  list_init(&list, n_approximations);
+  if (pthread_mutex_init(&list_lock, NULL)) {
+    fprintf(stderr, "Error initializing list_lock.\n");
     exit(EXIT_FAILURE);
   }
 
   srand(time(NULL));
-  if (pthread_mutex_init(&r_lock, NULL)) {
-    fprintf(stderr, "Error initializing r_lock.\n");
+  if (pthread_mutex_init(&rand_lock, NULL)) {
+    fprintf(stderr, "Error initializing rand_lock.\n");
     exit(EXIT_FAILURE);
   }
 
@@ -147,7 +171,7 @@ int main(int argc, char *argv[]) {
   // Create the simulation threads.
   pthread_t simulators[n_simulators];
   for (int i = 0; i < n_simulators; ++i) {
-    if (pthread_create(&simulators[i], NULL, experiment, NULL)) {
+    if (pthread_create(&simulators[i], NULL, simulate, NULL)) {
       fprintf(stderr, "Error creating simulation thread %d.\n", i);
       exit(EXIT_FAILURE);
     }
@@ -155,9 +179,7 @@ int main(int argc, char *argv[]) {
 
   // Create the printing thread.
   pthread_t printer;
-  int *iterations = malloc(sizeof(int));
-  *iterations = n_results;
-  if (pthread_create(&printer, NULL, print, (void *) iterations)) {
+  if (pthread_create(&printer, NULL, print, NULL)) {
     fprintf(stderr, "Error creating printing thread.\n");
     exit(EXIT_FAILURE);
   }
@@ -171,7 +193,7 @@ int main(int argc, char *argv[]) {
   }
 
   if (pthread_join(printer, NULL)) {
-    fprintf(stderr, "Error joining printer thread.\n");
+    fprintf(stderr, "Error joining printing thread.\n");
     exit(EXIT_FAILURE);
   }
 
