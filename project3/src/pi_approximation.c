@@ -86,7 +86,8 @@ void *simulate(void *arg) {
     if (simulation.n_total % simulation.interval == 0
         || simulation.n_total == simulation.maximum) {
       // Compute the new approximation and add it to the list.
-      double estimate = simulation.n_interior * 4.0 / simulation.n_total;
+      double estimate =
+          ((double) (simulation.n_interior * 4)) / simulation.n_total;
       pair_t entry = {simulation.n_total, estimate};
 
       // Changes to the approximation list must be atomic.
@@ -142,7 +143,7 @@ int main(int argc, char *argv[]) {
   int interval = atoi(argv[3]);
   // The total number of approximations can be shown to be equal to
   // ceiling(maximum / interval).
-  int n_approximations = ceil(((double) maximum) * 1.0 / interval);
+  int n_estimates = ceil(((double) maximum) / interval);
 
   simulation_init(&simulation, maximum, interval);
   if (pthread_mutex_init(&simulation_lock, NULL)) {
@@ -151,7 +152,7 @@ int main(int argc, char *argv[]) {
   }
 
   // The capacity of the list equals the total number of approximations.
-  list_init(&list, n_approximations);
+  list_init(&list, n_estimates);
   if (pthread_mutex_init(&list_lock, NULL)) {
     fprintf(stderr, "Error initializing list_lock.\n");
     exit(EXIT_FAILURE);
