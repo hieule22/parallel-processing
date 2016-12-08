@@ -10,7 +10,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "queue.h"
+#include "list.h"
+
+#define RADIUS 0.5
 
 /**
  * Struct storing the information about a simulation.
@@ -45,34 +47,39 @@ void simulation_init(simulation_t *sim, const int interval, const int maximum) {
 // Main simulation and its guarding mutex.
 simulation_t sim;
 pthread_mutex_t s_lock;
-// Result queue and its guarding mutex.
-queue_t queue;
-pthread_mutex_t q_lock;
+// Result list and its guarding mutex.
+list_t list;
+pthread_mutex_t l_lock;
 // Mutex guarding the random number generator.
 pthread_mutex_t r_lock;
 // Conditional variable.
-pthread_cond_t queue_has_new_elements;
+pthread_cond_t list_has_new_elements;
 
 void *experiment(void *arg) {
   while (!sim.complete) {
     // Generate a random data point and checks if it is inside the unit circle.
     pthread_mutex_lock(&r_lock);
-    double x = (double) (rand()) / RAND_MAX;
-    double y = (double) (rand()) / RAND_MAX;
+    int x = rand();
+    int y = rand();
     pthread_mutex_unlock(&r_lock);
 
-    double dist = (x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5);
+    double dx = ((double) x) / RAND_MAX - RADIUS;
+    double dy = ((double) y) / RAND_MAX - RADIUS;
+    double dist = dx * dx + dy * dy;
 
     pthread_mutex_lock(&s_lock);
     ++sim.num_total;
-    sim.num_interior += (dist <= 0.25) ? 1 : 0;
+    sim.num_interior += (dist <= RADIUS * RADIUS) ? 1 : 0;
     if (sim.num_total % sim.interval == 0 || sim.num_total == sim.maximum) {
       // Compute the new approximation and add it to the queue.
       double approx = sim.num_interior * 4.0 / sim.num_total;
-      pthread_mutex_lock(&q_lock);
-      queue_add(&queue, approx);
-      pthread_cond_broadcast(&queue_has_new_elements);
-      pthread_mutex_unlock(&q_lock);
+      pthread_mutex_lock(&l_lock);
+      entry_t entry;
+      entry.first = sim.num_total;
+      entry.second = approx;
+      list_add(&list, &entry);
+      pthread_cond_broadcast(&list_has_new_elements);
+      pthread_mutex_unlock(&l_lock);
 
       if (sim.num_total == sim.maximum) {
         sim.complete = true;
@@ -87,17 +94,17 @@ void *experiment(void *arg) {
 void *print(void *arg) {
   int iterations = *(int *) arg;
   free(arg);
-  int iteration = 0;
-  while (iteration < iterations) {
-    pthread_mutex_lock(&q_lock);
-    while (queue_empty(&queue)) {
-      pthread_cond_wait(&queue_has_new_elements, &q_lock);
+  size_t index = 0;
+  while (index < iterations) {
+    pthread_mutex_lock(&l_lock);
+    while (index == list_size(&list)) {
+      pthread_cond_wait(&list_has_new_elements, &l_lock);
     }
 
-    ++iteration;
-    double approx = queue_remove(&queue);
-    fprintf(stderr, "%d: %.9f\n", iteration * sim.interval, approx);
-    pthread_mutex_unlock(&q_lock);
+    const entry_t *entry = list_get(&list, index);
+    ++index;
+    fprintf(stderr, "%d: %.9f\n", entry->first, entry->second);
+    pthread_mutex_unlock(&l_lock);
   }
 
   pthread_exit(NULL);
@@ -120,9 +127,9 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  queue_init(&queue, n_results);
-  if (pthread_mutex_init(&q_lock, NULL)) {
-    fprintf(stderr, "Error initializing q_lock.\n");
+  list_init(&list, n_results);
+  if (pthread_mutex_init(&l_lock, NULL)) {
+    fprintf(stderr, "Error initializing l_lock.\n");
     exit(EXIT_FAILURE);
   }
 
@@ -132,7 +139,7 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  if (pthread_cond_init(&queue_has_new_elements, NULL)) {
+  if (pthread_cond_init(&list_has_new_elements, NULL)) {
     fprintf(stderr, "Error initializing condition variable.\n");
     exit(EXIT_FAILURE);
   }
