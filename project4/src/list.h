@@ -1,6 +1,6 @@
 /**
  * CS 435 - Project 4: A Concurrent Computation of PI.
- * Implemenation of a list of <int, double> pairs.
+ * Implemenation of a list of pairs of unsigned integers.
  * @author Hieu Le
  * @version December 7th, 2016
  */
@@ -8,12 +8,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-// A struct representing a <int, double> pair.
+// A struct representing a pair of unsigned integers.
 typedef struct {
-  // The integer component represents the number of the approximation.
   size_t first;
-  // The double component represents the value of the approximation.
-  double second;
+  size_t second;
 } pair_t;
 
 typedef struct {

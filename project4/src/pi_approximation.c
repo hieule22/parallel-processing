@@ -85,15 +85,14 @@ void *simulate(void *arg) {
     simulation.n_interior += (squared_dist <= RADIUS * RADIUS) ? 1 : 0;
     if (simulation.n_total % simulation.interval == 0
         || simulation.n_total == simulation.maximum) {
-      // Compute the new approximation and add it to the list.
-      double estimate =
-          ((double) (simulation.n_interior * 4)) / simulation.n_total;
-      pair_t entry = {simulation.n_total, estimate};
+      // Add the information needed to calculate the current approximation
+      // to the list.
+      pair_t entry = {simulation.n_interior, simulation.n_total};
 
       // Changes to the approximation list must be atomic.
       pthread_mutex_lock(&list_lock);
       list_add(&list, &entry);
-      // Wake up the printing thread upon a new addition to the list.
+      // Wake up the printing thread after adding a new element to the list.
       pthread_cond_broadcast(&list_has_new_elements);
       pthread_mutex_unlock(&list_lock);
 
@@ -117,13 +116,14 @@ void *print(void *arg) {
   while (index < list.capacity) {
     pthread_mutex_lock(&list_lock);
     while (index >= list_size(&list)) {
-      // Wait for new approximations to be added to the list.
+      // Wait for new elements to be added to the list.
       pthread_cond_wait(&list_has_new_elements, &list_lock);
     }
-    const pair_t *estimate = list_get(&list, index);
+    const pair_t *entry = list_get(&list, index);
     pthread_mutex_unlock(&list_lock);
-    // Print the approximations.
-    fprintf(stdout, "%zd: %.9f\n", estimate->first, estimate->second);
+    // Compute and print the current approximation.
+    double estimate = ((double) (entry->first * 4)) / entry->second;
+    fprintf(stdout, "%zd: %.9f\n", entry->second, estimate);
     ++index;
   }
 
