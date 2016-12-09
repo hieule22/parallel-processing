@@ -8,7 +8,7 @@ LIBS = -lpthread -lm
 # Executable name
 TARGET = pi_approximation
 
-$(TARGET):
+$(TARGET): pi_approximation.c list.h
 	$(CC) $(CFLAGS) -o $(TARGET) pi_approximation.c $(LIBS)
 
 clean:

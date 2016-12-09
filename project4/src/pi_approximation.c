@@ -9,6 +9,8 @@
 #include <math.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -20,14 +22,14 @@
  * A struct storing the information associated with a simulation.
  */
 typedef struct {
-  // The number of points inside the unit circle.
-  int n_interior;
+  // The number of points inside the circle.
+  uint32_t n_interior;
   // The total number of points examined so far.
-  int n_total;
+  uint32_t n_total;
   // The maximum number of experiments to be performed.
-  int maximum;
+  uint32_t maximum;
   // The number of experiments between printing of approximation.
-  int interval;
+  uint32_t interval;
 } simulation_t;
 
 // Main simulation and its guarding mutex.
@@ -69,16 +71,16 @@ void *simulate(void *arg) {
       pthread_mutex_unlock(&simulation_lock);
       pthread_exit(NULL);
     }
-    ++simulation.n_total;
+    simulation.n_total++;
     simulation.n_interior += (squared_dist <= RADIUS * RADIUS) ? 1 : 0;
     // Add to the list the information necessary to compute the current
     // approximation if the number of experiments performed so far is a
     // multiple of interval or equals the maximum number of experiments.
     if (simulation.n_total % simulation.interval == 0
         || simulation.n_total == simulation.maximum) {
-      pair_t element = {simulation.n_interior, simulation.n_total};
       // Atomically add a new element to the approximation list and signal
       // printing thread of this change.
+      pair_t element = {simulation.n_interior, simulation.n_total};
       pthread_mutex_lock(&list_lock);
       list_add(&list, &element);
       pthread_cond_broadcast(&list_has_new_elements);
@@ -88,7 +90,7 @@ void *simulate(void *arg) {
   }
 
   // Defensive programming. This code segment should never be executed.
-  fprintf(stderr, "Programming error.\n");
+  fprintf(stderr, "FATAL ERROR!\n");
   exit(EXIT_FAILURE);
 }
 
@@ -109,7 +111,7 @@ void *print(void *arg) {
     pthread_mutex_unlock(&list_lock);
     // Compute and print the current approximation.
     double estimate = ((double) (element->first * 4)) / element->second;
-    fprintf(stdout, "%zd: %.9f\n", element->second, estimate);
+    fprintf(stdout, "%u: %.9f\n", element->second, estimate);
     ++index;
   }
 
@@ -120,7 +122,7 @@ int main(int argc, char *argv[]) {
   if (argc != 4) {
     fprintf(stderr, "Usage: %s <number of simulation threads> "
             "<total number of experiments> "
-            "<number of experiments between printing>.\n", argv[0]);
+            "<number of experiments between printing>\n", argv[0]);
     exit(EXIT_FAILURE);
   }
 
@@ -134,7 +136,8 @@ int main(int argc, char *argv[]) {
 
   // The list's capacity, i.e the total number of approximations to print, can
   // be shown to be equal to ceiling(maximum / interval).
-  int n_estimates = ceil(((double) simulation.maximum) / simulation.interval);
+  uint32_t n_estimates =
+      ceil(((double) simulation.maximum) / simulation.interval);
   list_init(&list, n_estimates);
   if (pthread_mutex_init(&list_lock, NULL)) {
     fprintf(stderr, "Error initializing list_lock.\n");
@@ -152,11 +155,11 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  const int n_simulators = atoi(argv[1]);
+  const uint32_t n_simulators = atoi(argv[1]);
   pthread_t simulators[n_simulators];
-  for (int i = 0; i < n_simulators; ++i) {
+  for (uint32_t i = 0; i < n_simulators; ++i) {
     if (pthread_create(&simulators[i], NULL, simulate, NULL)) {
-      fprintf(stderr, "Error creating simulation thread %d.\n", i);
+      fprintf(stderr, "Error creating simulation thread %u.\n", i);
       exit(EXIT_FAILURE);
     }
   }
@@ -168,9 +171,9 @@ int main(int argc, char *argv[]) {
   }
 
   // Clean up.
-  for (int i = 0; i < n_simulators; ++i) {
+  for (uint32_t i = 0; i < n_simulators; ++i) {
     if (pthread_join(simulators[i], NULL)) {
-      fprintf(stderr, "Error joining simulation thread %d.\n", i);
+      fprintf(stderr, "Error joining simulation thread %u.\n", i);
       exit(EXIT_FAILURE);
     }
   }

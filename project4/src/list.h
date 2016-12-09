@@ -5,21 +5,26 @@
  * @version December 7th, 2016
  */
 
+#ifndef PROJECT4_SRC_LIST_H_
+#define PROJECT4_SRC_LIST_H_
+
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 // A struct representing a pair of unsigned integers.
 typedef struct {
-  size_t first;
-  size_t second;
+  uint32_t first;
+  uint32_t second;
 } pair_t;
 
+// A list of unsigned integer pairs with predefined capacity.
 typedef struct {
   // The content of this list.
-  pair_t *entries;
+  pair_t *data;
   // The capacity of this list.
   size_t capacity;
-  // The size of this list.
+  // The current size of this list.
   size_t size;
 } list_t;
 
@@ -29,7 +34,7 @@ typedef struct {
  * @param capacity the maximum number of values that the list can hold
  */
 void list_init(list_t *list, const size_t capacity) {
-  list->entries = (pair_t *) malloc(capacity * sizeof(pair_t));
+  list->data = (pair_t *) malloc(capacity * sizeof(pair_t));
   list->capacity = capacity;
   list->size = 0;
 }
@@ -39,7 +44,7 @@ void list_init(list_t *list, const size_t capacity) {
  * @param list a pointer to the list to be destroyed
  */
 void list_destroy(list_t *list) {
-  free(list->entries);
+  free(list->data);
 }
 
 /**
@@ -49,8 +54,8 @@ void list_destroy(list_t *list) {
  */
 void list_add(list_t *list, const pair_t *element) {
   int index = list->size;
-  list->entries[index].first = element->first;
-  list->entries[index].second = element->second;
+  list->data[index].first = element->first;
+  list->data[index].second = element->second;
   ++list->size;
 }
 
@@ -58,14 +63,14 @@ void list_add(list_t *list, const pair_t *element) {
  * Returns the element at position index of a list.
  * @param list a pointer to the list to be queried
  * @param index the position of the element to retrieve
- * @return a pointer to the target element
+ * @return an immutable pointer to the target element
  */
 const pair_t *list_get(const list_t *list, const size_t index) {
-  return &list->entries[index];
+  return &list->data[index];
 }
 
 /**
- * Returns the size of a list.
+ * Returns the current size of a list.
  * @param list a pointer to the list whose size is to be queried
  * @return the current number of elements in the list
  */
@@ -81,3 +86,5 @@ size_t list_size(const list_t *list) {
 size_t list_capacity(const list_t *list) {
   return list->capacity;
 }
+
+#endif  // PROJECT4_SRC_LIST_H_
